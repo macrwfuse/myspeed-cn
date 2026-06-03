@@ -1,6 +1,33 @@
 import fs from 'node:fs';
 import { getJson } from './http.js';
 
+// ──────────────────────────────────────────────
+// xxir CDN-based speed test nodes
+// These use real CDN downloads instead of Ookla/LibreSpeed
+// ──────────────────────────────────────────────
+export const XXIR_SERVERS = {
+    "xxir-1": {
+        name: "CDN节点1 (国内多源)",
+        sponsor: "speed.xxir.com",
+        country: "China",
+        cc: "CN",
+        distance: 0,
+        host: "speed.xxir.com",
+        type: "xxir",
+        description: "30个国内CDN源随机下载测速（抖音/京东/百度/阿里等）"
+    },
+    "xxir-2": {
+        name: "CDN节点2 (分组随机)",
+        sponsor: "speed.xxir.com",
+        country: "China",
+        cc: "CN",
+        distance: 0,
+        host: "speed.xxir.com",
+        type: "xxir",
+        description: "7组CDN源随机选择一组后随机下载测速"
+    },
+};
+
 // Embedded CN speedtest nodes (from spiritLHLS/speedtest.net-CN-ID)
 const CN_SERVERS = {
     "5396": {"name":"Suzhou","sponsor":"China Telecom JiangSu 5G","country":"China","cc":"CN","distance":0,"host":"4gsuzhou1.speedtest.jsinfo.net.prod.hosts.ooklaserver.net"},
@@ -54,17 +81,17 @@ for (const {file, url, format, isCurrent} of sources) {
         .then((data) => {
             let servers = Object.fromEntries((data ?? []).map((row) => [row.id, format(row)]));
 
-            // Merge CN servers into ookla list (CN servers take priority)
+            // Merge CN servers and xxir nodes into ookla list (CN/xxir take priority)
             if (file.includes("ookla")) {
-                servers = { ...servers, ...CN_SERVERS };
+                servers = { ...servers, ...CN_SERVERS, ...XXIR_SERVERS };
             }
 
             fs.writeFileSync(file, JSON.stringify(servers, null, 4));
         })
         .catch(() => {
-            // If online fetch fails, still write CN servers
+            // If online fetch fails, still write CN servers + xxir nodes
             if (file.includes("ookla") && !fs.existsSync(file)) {
-                fs.writeFileSync(file, JSON.stringify(CN_SERVERS, null, 4));
+                fs.writeFileSync(file, JSON.stringify({ ...CN_SERVERS, ...XXIR_SERVERS }, null, 4));
             }
             console.error("Could not load servers from online, using embedded CN servers");
         });

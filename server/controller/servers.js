@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { XXIR_SERVERS } from '../util/loadServers.js';
 
 // Embedded CN speedtest nodes (from spiritLHLS/speedtest.net-CN-ID)
 const CN_SERVERS = {
@@ -39,8 +40,8 @@ export const getOoklaServers = () => {
         } catch { }
     }
 
-    // Always merge CN servers (CN servers take priority)
-    servers = { ...servers, ...CN_SERVERS };
+    // Always merge CN servers (CN servers take priority), then xxir nodes
+    servers = { ...servers, ...CN_SERVERS, ...XXIR_SERVERS };
     ooklaServers = servers;
 
     return ooklaServers;
