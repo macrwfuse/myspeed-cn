@@ -10,13 +10,13 @@ app.get("/image", passwordWrapper(true, (req, res) => {
 }), async (req, res) => {
 
   try {
-    const svg = await generateOpenGraphImage(req);
+    const png = await generateOpenGraphImage(req);
 
-    if (!svg) {
+    if (!png) {
       return res.status(500).json({ message: "Error fetching test data" });
     }
 
-    res.setHeader("Content-Type", "image/svg+xml").status(200).send(svg);
+    res.setHeader("Content-Type", "image/svg+xml").status(200).send(png);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
