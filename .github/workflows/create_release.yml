@@ -1,197 +1,105 @@
-name: Release MySpeed-CN
+name: Release
 
 on:
   push:
     tags: ["v*"]
-  workflow_dispatch:
 
 jobs:
-  build-windows:
-    name: "Build Windows x64"
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Build client
-        working-directory: client
-        run: bun install && bun run build
-
-      - name: Move build
-        shell: pwsh
-        run: Move-Item -Path client/build -Destination . -Force
-
-      - name: Build server
-        run: |
-          bun install
-          bun run generate-migrations
-          bun run generate-integrations
-          bun run generate-client-embed
-
-      - name: Compile Windows binary
-        run: >
-          bun build --compile
-          --compile-autoload-package-json
-          --external pg-hstore
-          --external pg
-          --target=bun-windows-x64
-          server/index.js
-          --outfile MySpeed-CN-windows-x64.exe
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: MySpeed-CN-windows-x64
-          path: MySpeed-CN-windows-x64.exe
-
-  build-linux:
-    name: "Build Linux ${{ matrix.arch }}"
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: x64
-            target: bun-linux-x64
-            runner: ubuntu-latest
-          - arch: arm64
-            target: bun-linux-arm64
-            runner: ubuntu-24.04-arm
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Build
-        run: |
-          cd client && bun install && bun run build && cd ..
-          mv client/build .
-          bun install
-          bun run generate-migrations
-          bun run generate-integrations
-          bun run generate-client-embed
-
-      - name: Compile
-        run: >
-          bun build --compile
-          --compile-autoload-package-json
-          --external pg-hstore
-          --external pg
-          --target=${{ matrix.target }}
-          server/index.js
-          --outfile MySpeed-CN-linux-${{ matrix.arch }}
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: MySpeed-CN-linux-${{ matrix.arch }}
-          path: MySpeed-CN-linux-${{ matrix.arch }}
-
-  build-macos:
-    name: "Build macOS ${{ matrix.arch }}"
-    runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: x64
-            target: bun-darwin-x64
-          - arch: arm64
-            target: bun-darwin-arm64
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Build
-        run: |
-          cd client && bun install && bun run build && cd ..
-          mv client/build .
-          bun install
-          bun run generate-migrations
-          bun run generate-integrations
-          bun run generate-client-embed
-
-      - name: Compile
-        run: >
-          bun build --compile
-          --compile-autoload-package-json
-          --external pg-hstore
-          --external pg
-          --target=${{ matrix.target }}
-          server/index.js
-          --outfile MySpeed-CN-macos-${{ matrix.arch }}
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: MySpeed-CN-macos-${{ matrix.arch }}
-          path: MySpeed-CN-macos-${{ matrix.arch }}
-
-  build-docker:
-    name: "Build Docker Image"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
-          platforms: linux/amd64
-          tags: myspeed-cn:latest
-          outputs: type=docker,dest=/tmp/myspeed-cn.tar
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: myspeed-cn-docker
-          path: /tmp/myspeed-cn.tar
-
   create-release:
-    name: "Create GitHub Release"
-    needs: [build-windows, build-linux, build-macos, build-docker]
+    name: "Create Release"
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      release_id: ${{ steps.create_release.outputs.id }}
 
-      - name: Create Release
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          draft: false
-          files: |
-            artifacts/MySpeed-CN-windows-x64/*
-            artifacts/MySpeed-CN-linux-x64/*
-            artifacts/MySpeed-CN-linux-arm64/*
-            artifacts/MySpeed-CN-macos-x64/*
-            artifacts/MySpeed-CN-macos-arm64/*
-          body: |
-            ## MySpeed-CN ${{ github.ref_name }}
+          tag_name: ${{ github.ref }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          draft: true
+          prerelease: false
 
-            ### ✨ 特性
-            - 🌐 xxir CDN 测速节点（国内真实 CDN 多流并发测速）
-            - 🚀 内置中国 Ookla 测速节点
-            - 🖥️ Windows/Linux/macOS 独立可执行文件
+  build-binaries:
+    name: "Build Binaries"
+    needs: create-release
+    uses: ./.github/workflows/build-binaries.yml
+    with:
+      version: ${{ needs.create-release.outputs.version }}
+      release_id: ${{ needs.create-release.outputs.release_id }}
+    secrets: inherit
 
-            ### 📥 下载
-            | 平台 | 文件 |
-            |------|------|
-            | Windows x64 | `MySpeed-CN-windows-x64.exe` |
-            | Linux x64 | `MySpeed-CN-linux-x64` |
-            | Linux ARM64 | `MySpeed-CN-linux-arm64` |
-            | macOS Intel | `MySpeed-CN-macos-x64` |
-            | macOS Apple Silicon | `MySpeed-CN-macos-arm64` |
+  build-docker:
+    name: "Build Docker"
+    needs: create-release
+    uses: ./.github/workflows/build-docker.yml
+    with:
+      version: ${{ needs.create-release.outputs.version }}
+    secrets: inherit
 
-            ### 🐳 Docker
-            ```bash
-            docker build -t myspeed-cn .
-            docker run -d -p 5216:5216 -v myspeed-data:/myspeed/data myspeed-cn
-            ```
+  build-msi:
+    name: "Build MSI"
+    needs: [create-release, build-binaries]
+    uses: ./.github/workflows/build-msi.yml
+    with:
+      version: ${{ needs.create-release.outputs.version }}
+      release_id: ${{ needs.create-release.outputs.release_id }}
+    secrets: inherit
+
+  finalize-release:
+    name: "Finalize Release"
+    needs: [create-release, build-binaries, build-docker, build-msi]
+    uses: ./.github/workflows/finalize-release.yml
+    with:
+      version: ${{ needs.create-release.outputs.version }}
+      release_id: ${{ needs.create-release.outputs.release_id }}
+    secrets: inherit
+
+  cleanup-on-failure:
+    name: "Cleanup on Failure"
+    runs-on: ubuntu-latest
+    needs: [create-release, build-binaries, build-docker, build-msi]
+    if: failure()
+    steps:
+      - name: Delete release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.repos.deleteRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: ${{ needs.create-release.outputs.release_id }}
+              });
+              console.log('Release deleted');
+            } catch (e) {
+              console.log('Failed to delete release:', e.message);
+            }
+
+      - name: Delete tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: 'tags/${{ github.ref_name }}'
+              });
+              console.log('Tag deleted');
+            } catch (e) {
+              console.log('Failed to delete tag:', e.message);
+            }
