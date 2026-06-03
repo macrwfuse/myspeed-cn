@@ -11,7 +11,30 @@
 
 ## 📥 下载
 
+### Windows 可执行文件
+
 从 [Releases](https://github.com/macrwfuse/myspeed-cn/releases) 页面下载 `MySpeed.exe`，直接双击运行。
+
+### Docker 部署
+
+```bash
+# 方式一：Docker Compose (推荐)
+docker compose up -d
+
+# 方式二：Docker Run
+docker run -d \
+  --name myspeed-cn \
+  -p 5216:5216 \
+  -v myspeed-data:/myspeed/data \
+  -e TZ=Asia/Shanghai \
+  --restart unless-stopped \
+  macrwfuse/myspeed-cn:latest
+
+# 方式三：一键安装脚本
+curl -fsSL https://raw.githubusercontent.com/macrwfuse/myspeed-cn/main/scripts/docker-install.sh | sudo bash
+```
+
+访问 http://localhost:5216 即可使用。
 
 ## 🇨🇳 内置中国测速节点
 
@@ -208,7 +231,10 @@ myspeed-cn/
 │   │   └── speedtest.js   # 测速执行
 │   └── index.js           # 入口文件
 ├── scripts/               # 构建脚本
-│   └── merge-cn-nodes.js  # CN 节点合并脚本 (新增)
+│   ├── merge-cn-nodes.js  # CN 节点合并脚本 (新增)
+│   └── docker-install.sh  # Docker 一键安装脚本
+├── Dockerfile             # Docker 构建文件
+├── docker-compose.yml     # Docker Compose 配置
 ├── dist/                  # 编译产物
 │   └── MySpeed.exe        # Windows 可执行文件
 ├── data/                  # 运行时数据 (自动生成)
@@ -238,6 +264,69 @@ export DB_HOST=localhost
 export DB_NAME=myspeed
 export DB_USER=root
 export DB_PASS=password
+```
+
+## 🐳 Docker 构建
+
+### 本地构建镜像
+
+```bash
+# 克隆仓库
+git clone https://github.com/macrwfuse/myspeed-cn.git
+cd myspeed-cn
+
+# 构建镜像
+docker build -t myspeed-cn:latest .
+
+# 运行容器
+docker run -d \
+  --name myspeed-cn \
+  -p 5216:5216 \
+  -v myspeed-data:/myspeed/data \
+  -e TZ=Asia/Shanghai \
+  myspeed-cn:latest
+```
+
+### 使用 Docker Compose
+
+```bash
+# 启动
+docker compose up -d
+
+# 查看日志
+docker compose logs -f
+
+# 停止
+docker compose down
+```
+
+### Docker 数据持久化
+
+Docker 部署时，以下数据会持久化到 Volume：
+
+- `data/storage.db` - 测试记录数据库
+- `data/servers/` - 服务器列表缓存
+- `data/certs/` - SSL 证书（如配置）
+- `bin/` - 测速工具二进制文件
+
+```bash
+# 查看 Volume 位置
+docker volume inspect myspeed-data
+
+# 备份数据
+docker run --rm -v myspeed-data:/data -v $(pwd):/backup alpine \
+  tar czf /backup/myspeed-backup.tar.gz -C /data .
+```
+
+### 自定义端口
+
+```bash
+# 使用 8080 端口
+docker run -d \
+  --name myspeed-cn \
+  -p 8080:5216 \
+  -v myspeed-data:/myspeed/data \
+  macrwfuse/myspeed-cn:latest
 ```
 
 ## 📝 与原版差异
