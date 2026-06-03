@@ -1,20 +1,15 @@
 /**
- * xxir Speed Test Provider
+ * xxir Speed Test Provider — Enhanced CN Edition
  *
- * Implements a multi-stream concurrent download/upload speed test,
- * inspired by speed.xxir.com's browser-based approach but running
- * entirely in Node.js (no browser/Web Worker needed).
+ * Integrates nodes from:
+ *   - speed.xxir.com (CDN multi-source)
+ *   - speedtest.im (运营商专线 + 教育网)
+ *   - Additional ISP-specific endpoints
  *
- * How it works:
- *   1. Ping:     HTTP GET to lightweight endpoints, measure RTT
- *   2. Download: Multiple concurrent HTTP GET streams downloading real CDN files,
- *                accumulate bytes over ~15 seconds, compute Mbps
- *   3. Upload:   Multiple concurrent HTTP POST streams uploading random data,
- *                accumulate bytes over ~12 seconds, compute Mbps
- *
- * Node selection:
- *   Automatically pings multiple CDN endpoint groups and picks the one with
- *   the lowest latency, providing geographic proximity detection.
+ * Node categories:
+ *   🌐 CDN 自动选择 — 多区域CDN，自动就近
+ *   📡 运营商专线 — 移动/电信/联通/教育网
+ *   🌍 海外节点 — CloudFlare 等
  */
 
 import http from 'node:http';
@@ -22,14 +17,18 @@ import https from 'node:https';
 import { URL } from 'node:url';
 
 // ──────────────────────────────────────────────
-// Regional CDN endpoint groups
-// Each group represents a geographic region with CDN-backed URLs
+// All speed test nodes
 // ──────────────────────────────────────────────
 
 const REGION_ENDPOINTS = {
+    // ═══════════════════════════════════════════
+    // 🌐 CDN 自动选择节点 (speed.xxir.com)
+    // ═══════════════════════════════════════════
+
     // 华东 (电信/联通骨干) - 抖音、京东、百度等
     east: {
-        name: '华东节点',
+        name: '华东节点 (CDN)',
+        category: 'cdn',
         ping: 'https://lf3-cdn-tos.bytecdntp.com/',
         pingFallback: 'https://www.baidu.com/favicon.ico',
         download: [
@@ -45,7 +44,8 @@ const REGION_ENDPOINTS = {
     },
     // 华北 (阿里云、百度云CDN)
     north: {
-        name: '华北节点',
+        name: '华北节点 (CDN)',
+        category: 'cdn',
         ping: 'https://maponline0.bdimg.com/tile/?qt=vtile&x=0&y=0&z=17',
         pingFallback: 'https://www.baidu.com/favicon.ico',
         download: [
@@ -59,7 +59,8 @@ const REGION_ENDPOINTS = {
     },
     // 华南 (腾讯、网易CDN)
     south: {
-        name: '华南节点',
+        name: '华南节点 (CDN)',
+        category: 'cdn',
         ping: 'https://lf3-cdn-tos.bytecdntp.com/',
         pingFallback: 'https://cdn.staticfile.org/favicon.ico',
         download: [
@@ -74,7 +75,8 @@ const REGION_ENDPOINTS = {
     },
     // 西南 (新浪、搜狐CDN)
     west: {
-        name: '西南节点',
+        name: '西南节点 (CDN)',
+        category: 'cdn',
         ping: 'https://lf3-cdn-tos.bytecdntp.com/',
         pingFallback: 'https://cdn.bootcdn.net/favicon.ico',
         download: [
@@ -86,31 +88,232 @@ const REGION_ENDPOINTS = {
             "https://video19.ifeng.com/video09/2022/07/06/p6950362006465552946-102-162611.mp4",
         ],
     },
-};
 
-// Upload endpoints (POST targets that accept data)
-const UPLOAD_URLS = [
-    "https://mbd.baidu.com/ztbox?action=zpblog",
-    "https://vcs.zijieapi.com/vc/setting?aid=6383&pageId=6241",
-];
+    // ═══════════════════════════════════════════
+    // 📡 运营商专线节点 (speedtest.im)
+    // ═══════════════════════════════════════════
+
+    // 移动节点 — 北京&河北专线
+    'cmcc-bj': {
+        name: '移动 · 北京&河北专线',
+        category: 'isp',
+        isp: '中国移动',
+        ping: 'http://211.136.30.118:9000/speed/10.data',
+        pingFallback: 'http://221.179.144.126:9000/speed/10.data',
+        download: [
+            'http://211.136.30.118:9000/speed/100000.data',
+            'http://221.179.144.126:9000/speed/100000.data',
+            'http://211.136.30.102:9001/speed/100000.data',
+            'http://211.136.30.98:9000/speed/100000.data',
+            'http://211.136.30.110:9000/speed/100000.data',
+            'http://211.136.30.122:9000/speed/100000.data',
+            'http://211.136.30.114:9000/speed/100000.data',
+            'http://211.136.30.126:9000/speed/100000.data',
+            'http://211.136.30.102:9000/speed/100000.data',
+            'http://211.136.30.106:9000/speed/100000.data',
+        ],
+        upload: [
+            'http://211.136.30.118:9000/speed/10.data',
+            'http://221.179.144.126:9000/speed/10.data',
+            'http://211.136.30.102:9001/speed/10.data',
+            'http://211.136.30.98:9000/speed/10.data',
+            'http://211.136.30.110:9000/speed/10.data',
+            'http://211.136.30.122:9000/speed/10.data',
+        ],
+    },
+
+    // 移动节点 — 全国多线
+    'cmcc-all': {
+        name: '移动 · 全国多线',
+        category: 'isp',
+        isp: '中国移动',
+        ping: 'http://111.11.36.122:9000/speed/10.data',
+        pingFallback: 'http://111.63.234.18:9000/speed/10.data',
+        download: [
+            'http://111.11.36.122:9000/speed/100000.data',
+            'http://111.11.20.226:9000/speed/100000.data',
+            'http://111.63.234.18:9000/speed/100000.data',
+            'http://111.11.78.14:9000/speed/100000.data',
+            'http://111.11.32.170:9000/speed/100000.data',
+            'http://111.11.20.234:9000/speed/100000.data',
+            'http://111.11.78.18:9000/speed/100000.data',
+        ],
+        upload: [
+            'http://111.11.36.122:9000/speed/10.data',
+            'http://111.11.20.226:9000/speed/10.data',
+            'http://111.63.234.18:9000/speed/10.data',
+            'http://111.11.78.14:9000/speed/10.data',
+        ],
+    },
+
+    // 电信节点 — 广东专线
+    'ct-gd': {
+        name: '电信 · 广东专线',
+        category: 'isp',
+        isp: '中国电信',
+        ping: 'http://sz.10000gd.tech:12348/shmfile/100',
+        pingFallback: 'http://gz.10000gd.tech:12348/shmfile/100',
+        download: [
+            'http://sz.10000gd.tech:12348/shmfile/100',
+            'http://gz.10000gd.tech:12348/shmfile/100',
+            'http://jm.10000gd.tech:12348/shmfile/100',
+            'http://yf.10000gd.tech:12348/shmfile/100',
+            'http://zh.10000gd.tech:12348/shmfile/100',
+            'http://zq.10000gd.tech:12348/shmfile/100',
+            'http://jy.10000gd.tech:12348/shmfile/100',
+            'http://st.10000gd.tech:12348/shmfile/100',
+            'http://hz.10000gd.tech:12348/shmfile/100',
+            'http://sg.10000gd.tech:12348/shmfile/100',
+            'http://sw.10000gd.tech:12348/shmfile/100',
+            'http://hy.10000gd.tech:12348/shmfile/100',
+            'http://zj.10000gd.tech:12348/shmfile/100',
+            'http://cz.10000gd.tech:12348/shmfile/100',
+            'http://qy.10000gd.tech:12348/shmfile/100',
+            'http://mz.10000gd.tech:12348/shmfile/100',
+            'http://mm.10000gd.tech:12348/shmfile/100',
+            'http://zs.10000gd.tech:12348/shmfile/100',
+            'http://yj.10000gd.tech:12348/shmfile/100',
+            'http://dg.10000gd.tech:12348/shmfile/100',
+            'http://fs.10000gd.tech:12348/shmfile/100',
+            'http://yb.10000gd.tech:12348/shmfile/100',
+            'http://yd.10000gd.tech:12348/shmfile/100',
+            'http://yx.10000gd.tech:12348/shmfile/100',
+            'http://zsj.10000gd.tech:12348/shmfile/100',
+        ],
+        upload: [
+            'http://sz.10000gd.tech:12348/upload',
+            'http://gz.10000gd.tech:12348/upload',
+            'http://jm.10000gd.tech:12348/upload',
+            'http://yf.10000gd.tech:12348/upload',
+            'http://zh.10000gd.tech:12348/upload',
+            'http://zq.10000gd.tech:12348/upload',
+            'http://jy.10000gd.tech:12348/upload',
+            'http://st.10000gd.tech:12348/upload',
+            'http://hz.10000gd.tech:12348/upload',
+            'http://sg.10000gd.tech:12348/upload',
+        ],
+    },
+
+    // 联通节点 — 全国多线
+    'cu-all': {
+        name: '联通 · 全国多线',
+        category: 'isp',
+        isp: '中国联通',
+        ping: 'http://113.229.96.166:8800/Dat/upServer',
+        pingFallback: 'http://60.22.32.158:8800/Dat/upServer',
+        download: [
+            'http://113.229.96.166:8800/Dat/DownloadServer',
+            'http://60.22.32.158:8800/Dat/DownloadServer',
+        ],
+        upload: [
+            'http://113.229.96.166:8800/Dat/upServer',
+            'http://60.22.32.158:8800/Dat/upServer',
+        ],
+    },
+
+    // ═══════════════════════════════════════════
+    // 🎓 教育网节点 (speedtest.im)
+    // ═══════════════════════════════════════════
+
+    'edu-ustc': {
+        name: '教育网 · 中科大',
+        category: 'edu',
+        ping: 'https://test.ustc.edu.cn/backend/empty.php?cors=1',
+        pingFallback: 'https://test.nju.edu.cn/backend/empty.php?cors=1',
+        download: [
+            'https://test.ustc.edu.cn/backend/garbage.php?cors=1&ckSize=100',
+            'https://test.nju.edu.cn/backend/garbage.php?cors=1&ckSize=100',
+        ],
+        upload: [
+            'https://test.ustc.edu.cn/backend/empty.php?cors=1',
+            'https://test.nju.edu.cn/backend/empty.php?cors=1',
+        ],
+    },
+
+    'edu-tsinghua': {
+        name: '教育网 · 清华',
+        category: 'edu',
+        ping: 'https://iptv.tsinghua.edu.cn/st/empty.php?cors=1',
+        pingFallback: 'https://test.ustc.edu.cn/backend/empty.php?cors=1',
+        download: [
+            'https://iptv.tsinghua.edu.cn/st/garbage.php?cors=1&ckSize=100',
+            'https://test.ustc.edu.cn/backend/garbage.php?cors=1&ckSize=100',
+        ],
+        upload: [
+            'https://iptv.tsinghua.edu.cn/st/empty.php?cors=1',
+            'https://test.ustc.edu.cn/backend/empty.php?cors=1',
+        ],
+    },
+
+    'edu-sjtu': {
+        name: '教育网 · 上交',
+        category: 'edu',
+        ping: 'https://ftp.sjtu.edu.cn/speedtest/backend/empty.php?cors=1',
+        pingFallback: 'https://test.ustc.edu.cn/backend/empty.php?cors=1',
+        download: [
+            'https://ftp.sjtu.edu.cn/speedtest/backend/garbage.php?cors=1&ckSize=100',
+            'https://test.ustc.edu.cn/backend/garbage.php?cors=1&ckSize=100',
+        ],
+        upload: [
+            'https://ftp.sjtu.edu.cn/speedtest/backend/empty.php?cors=1',
+            'https://test.ustc.edu.cn/backend/empty.php?cors=1',
+        ],
+    },
+
+    'edu-multi': {
+        name: '教育网 · 多线',
+        category: 'edu',
+        ping: 'https://219.140.61.101/backend/empty.php?cors=1',
+        pingFallback: 'https://119.36.86.250:81/backend/empty.php?cors=1',
+        download: [
+            'https://219.140.61.101/backend/garbage.php?cors=1&ckSize=100',
+            'https://119.36.86.250:81/backend/garbage.php?cors=1&ckSize=100',
+            'http://211.67.53.2/backend/garbage.php?cors=1&ckSize=100',
+        ],
+        upload: [
+            'https://219.140.61.101/backend/empty.php?cors=1',
+            'https://119.36.86.250:81/backend/empty.php?cors=1',
+            'http://211.67.53.2/backend/empty.php?cors=1',
+        ],
+    },
+
+    // ═══════════════════════════════════════════
+    // 🌍 海外节点
+    // ═══════════════════════════════════════════
+
+    'cloudflare': {
+        name: 'CloudFlare · 全球CDN',
+        category: 'global',
+        ping: 'https://speed.cloudflare.com/__down?bytes=0',
+        pingFallback: 'https://1.1.1.1/cdn-cgi/trace',
+        download: [
+            'https://speed.cloudflare.com/__down?bytes=25000000',
+            'https://speed.cloudflare.com/__down?bytes=10000000',
+        ],
+        upload: [
+            'https://speed.cloudflare.com/__up',
+        ],
+        isUpload: true,
+    },
+};
 
 // ──────────────────────────────────────────────
 // Config
 // ──────────────────────────────────────────────
 
 const CONFIG = {
-    dlStreams: 12,           // concurrent download streams
-    ulStreams: 5,            // concurrent upload streams
-    streamDelay: 100,        // ms delay between stream starts
-    dlGraceTime: 2,          // seconds before measuring starts
+    dlStreams: 12,
+    ulStreams: 5,
+    streamDelay: 100,
+    dlGraceTime: 2,
     ulGraceTime: 2,
-    dlMaxTime: 15,           // max download test seconds
-    ulMaxTime: 12,           // max upload test seconds
-    pingCount: 3,            // pings per region for detection
-    overheadFactor: 1.06,    // TCP/IP overhead compensation
-    pollInterval: 200,       // ms between speed samples
-    ulBlobSize: 1024 * 1024, // 1MB upload blob
-    regionTimeout: 3000,     // ms timeout for region ping
+    dlMaxTime: 15,
+    ulMaxTime: 12,
+    pingCount: 3,
+    overheadFactor: 1.06,
+    pollInterval: 200,
+    ulBlobSize: 1024 * 1024,
+    regionTimeout: 5000,
 };
 
 // ──────────────────────────────────────────────
@@ -198,51 +401,56 @@ function httpPost(url, sizeBytes, signal) {
 }
 
 // ──────────────────────────────────────────────
-// Region detection — ping each region, pick fastest
+// Ping with fallback
+// ──────────────────────────────────────────────
+
+async function pingUrl(url, timeout) {
+    const start = performance.now();
+    await httpGet(makeUrl(url), null, null, timeout);
+    return performance.now() - start;
+}
+
+async function pingWithFallback(ep, count = CONFIG.pingCount) {
+    const latencies = [];
+
+    // Try primary
+    for (let i = 0; i < count; i++) {
+        try {
+            latencies.push(await pingUrl(ep.ping, CONFIG.regionTimeout));
+        } catch { }
+        await new Promise(r => setTimeout(r, 50));
+    }
+
+    // Try fallback
+    if (latencies.length === 0 && ep.pingFallback) {
+        for (let i = 0; i < count; i++) {
+            try {
+                latencies.push(await pingUrl(ep.pingFallback, CONFIG.regionTimeout));
+            } catch { }
+            await new Promise(r => setTimeout(r, 50));
+        }
+    }
+
+    return latencies;
+}
+
+// ──────────────────────────────────────────────
+// Region detection — ping all, pick fastest
 // ──────────────────────────────────────────────
 
 async function detectBestRegion() {
     const regions = Object.keys(REGION_ENDPOINTS);
     const results = {};
 
-    // Ping all regions in parallel
     await Promise.allSettled(regions.map(async (region) => {
         const ep = REGION_ENDPOINTS[region];
-        const latencies = [];
-        
-        // Try primary ping endpoint
-        for (let i = 0; i < CONFIG.pingCount; i++) {
-            const start = performance.now();
-            try {
-                await httpGet(makeUrl(ep.ping), null, null, CONFIG.regionTimeout);
-                latencies.push(performance.now() - start);
-            } catch {
-                // skip failed ping
-            }
-            await new Promise(r => setTimeout(r, 50));
-        }
-        
-        // If primary failed, try fallback
-        if (latencies.length === 0 && ep.pingFallback) {
-            for (let i = 0; i < CONFIG.pingCount; i++) {
-                const start = performance.now();
-                try {
-                    await httpGet(makeUrl(ep.pingFallback), null, null, CONFIG.regionTimeout);
-                    latencies.push(performance.now() - start);
-                } catch {
-                    // skip failed ping
-                }
-                await new Promise(r => setTimeout(r, 50));
-            }
-        }
-        
+        const latencies = await pingWithFallback(ep);
         if (latencies.length > 0) {
             results[region] = Math.min(...latencies);
         }
     }));
 
-    // Pick region with lowest latency
-    let bestRegion = 'east'; // default fallback
+    let bestRegion = 'east';
     let bestLatency = Infinity;
     for (const [region, latency] of Object.entries(results)) {
         if (latency < bestLatency) {
@@ -256,37 +464,27 @@ async function detectBestRegion() {
 }
 
 // ──────────────────────────────────────────────
-// Ping test (uses best region's endpoint)
+// Ping test
 // ──────────────────────────────────────────────
 
 async function pingTest(regionKey, count = 5) {
     const region = REGION_ENDPOINTS[regionKey];
     const latencies = [];
 
-    // Try primary ping endpoint
+    // Try primary
     for (let i = 0; i < count; i++) {
-        const start = performance.now();
         try {
-            await httpGet(makeUrl(region.ping), () => { });
-            const rtt = performance.now() - start;
-            latencies.push(rtt);
-        } catch {
-            // skip failed ping
-        }
+            latencies.push(await pingUrl(region.ping, CONFIG.regionTimeout));
+        } catch { }
         await new Promise(r => setTimeout(r, 100));
     }
 
-    // If primary failed, try fallback
+    // Try fallback
     if (latencies.length === 0 && region.pingFallback) {
         for (let i = 0; i < count; i++) {
-            const start = performance.now();
             try {
-                await httpGet(makeUrl(region.pingFallback), () => { });
-                const rtt = performance.now() - start;
-                latencies.push(rtt);
-            } catch {
-                // skip failed ping
-            }
+                latencies.push(await pingUrl(region.pingFallback, CONFIG.regionTimeout));
+            } catch { }
             await new Promise(r => setTimeout(r, 100));
         }
     }
@@ -310,7 +508,7 @@ async function pingTest(regionKey, count = 5) {
 }
 
 // ──────────────────────────────────────────────
-// Download test (multi-stream, grace time, auto-stop)
+// Download test
 // ──────────────────────────────────────────────
 
 async function downloadTest(regionKey) {
@@ -390,10 +588,20 @@ async function downloadTest(regionKey) {
 }
 
 // ──────────────────────────────────────────────
-// Upload test (multi-stream)
+// Upload test
 // ──────────────────────────────────────────────
 
-async function uploadTest() {
+function getUploadUrls(regionKey) {
+    const region = REGION_ENDPOINTS[regionKey];
+    if (region.upload && region.upload.length > 0) return region.upload;
+    // Fallback to generic upload endpoints
+    return [
+        "https://mbd.baidu.com/ztbox?action=zpblog",
+        "https://vcs.zijieapi.com/vc/setting?aid=6383&pageId=6241",
+    ];
+}
+
+async function uploadTest(regionKey) {
     const controller = new AbortController();
     let totalBytes = 0;
     const startTime = performance.now();
@@ -402,6 +610,7 @@ async function uploadTest() {
     const speeds = [];
 
     const blobSize = CONFIG.ulBlobSize;
+    const uploadUrls = getUploadUrls(regionKey);
 
     const streamPromises = [];
     for (let i = 0; i < CONFIG.ulStreams; i++) {
@@ -409,7 +618,7 @@ async function uploadTest() {
             await new Promise(r => setTimeout(r, i * CONFIG.streamDelay));
             while (!controller.signal.aborted) {
                 try {
-                    const url = makeUrl(pick(UPLOAD_URLS));
+                    const url = makeUrl(pick(uploadUrls));
                     await httpPost(url, blobSize, controller.signal);
                     totalBytes += blobSize;
                 } catch (e) {
@@ -468,15 +677,9 @@ async function uploadTest() {
 // Main entry point
 // ──────────────────────────────────────────────
 
-/**
- * Run a full xxir speed test.
- * @param {string} nodeId - "xxir-auto" (auto-detect), "xxir-east", "xxir-north", "xxir-south", "xxir-west"
- * @returns {Object} Test result in MySpeed-compatible format
- */
 export async function runXxirTest(nodeId = 'xxir-auto') {
     const startTime = performance.now();
 
-    // Resolve region: auto-detect or use specific region
     let bestRegion;
     if (nodeId === 'xxir-auto' || nodeId === 'xxir-1') {
         bestRegion = await detectBestRegion();
@@ -485,20 +688,22 @@ export async function runXxirTest(nodeId = 'xxir-auto') {
         if (!REGION_ENDPOINTS[bestRegion]) {
             bestRegion = await detectBestRegion();
         }
+    } else if (REGION_ENDPOINTS[nodeId]) {
+        bestRegion = nodeId;
     } else {
         bestRegion = await detectBestRegion();
     }
 
     const regionInfo = REGION_ENDPOINTS[bestRegion];
 
-    // 2. Ping
+    // Ping
     const pingResult = await pingTest(bestRegion);
 
-    // 3. Download
+    // Download
     const dlResult = await downloadTest(bestRegion);
 
-    // 4. Upload
-    const ulResult = await uploadTest();
+    // Upload
+    const ulResult = await uploadTest(bestRegion);
 
     const totalTime = Math.round((performance.now() - startTime) / 1000);
 
@@ -517,7 +722,7 @@ export async function runXxirTest(nodeId = 'xxir-auto') {
         },
         server: {
             id: nodeId,
-            name: `${regionInfo.name} (自动选择)`,
+            name: regionInfo.name,
             host: 'speed.xxir.com',
         },
         elapsed: totalTime,
