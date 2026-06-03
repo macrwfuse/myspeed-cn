@@ -165,6 +165,13 @@
     "latest": "最近一次测速",
     "before": "于"
   },
+  "network": {
+    "ip": "出口IP",
+    "isp": "运营商",
+    "location": "位置",
+    "loading": "加载中...",
+    "error": "获取失败"
+  },
   "info": {
     "credits": "<MSpeed>MySpeed</MSpeed>是由 GNMYT 开发的开源项目。欢迎在<Github>GitHub</Github>上提出建议或<Donate>捐赠</Donate>支持项目发展。",
     "recommendations_error": "需要至少进行 10 次测速才能生成平均值。无论是手动还是自动测速都可以。",

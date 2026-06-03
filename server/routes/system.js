@@ -31,4 +31,23 @@ app.get("/interfaces", password(false), async (req, res) => {
     res.json(interfaces.interfaces);
 });
 
+// 获取网络出口IP、运营商和地理位置信息
+app.get("/network-info", password(false), async (req, res) => {
+    try {
+        const data = await getJson("http://ip-api.com/json/?lang=zh-CN");
+        res.json({
+            ip: data.query,
+            isp: data.isp,
+            org: data.org,
+            country: data.country,
+            region: data.regionName,
+            city: data.city,
+            lat: data.lat,
+            lon: data.lon
+        });
+    } catch (e) {
+        res.status(500).json({message: "Failed to fetch network info"});
+    }
+});
+
 export default app;

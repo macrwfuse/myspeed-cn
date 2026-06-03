@@ -227,6 +227,13 @@
     "latest": "Last test",
     "before": "before"
   },
+  "network": {
+    "ip": "Exit IP",
+    "isp": "ISP",
+    "location": "Location",
+    "loading": "Loading...",
+    "error": "Failed to fetch"
+  },
   "info": {
     "recommendations_error": "You have to do at least 10 tests to get an average. It doesn't matter if the tests were done manually or automatically.",
     "recommendations_info": "Based on the last 10 tests, it was found that the optimal ping was <Bold>{{ping}} ms</Bold>, the download at <Bold>{{down}} Mbps</Bold> and the upload at <Bold>{{up}} Mbps</Bold>. It is best to orientate yourself on your internet contract and only adopt it if it matches that.",
