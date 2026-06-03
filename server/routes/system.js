@@ -21,7 +21,7 @@ app.get("/version", password(false), async (req, res) => {
 });
 
 app.get("/server/:provider", password(false), (req, res) => {
-    if (!["ookla", "libre"].includes(req.params.provider))
+    if (!["ookla", "libre", "xxir"].includes(req.params.provider))
         return res.status(400).json({message: "Invalid provider"});
 
     res.json(serverController.getByMode(req.params.provider));

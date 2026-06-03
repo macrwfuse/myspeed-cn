@@ -22,6 +22,7 @@ const configDefaults = {
     ooklaId: "none",
     libreId: "none",
     libreUrl: "none",
+    xxirId: "none",
     password: "none",
     passwordLevel: "none",
     interface: "none",

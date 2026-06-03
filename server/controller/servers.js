@@ -59,5 +59,5 @@ export const getOoklaServers = () => {
 export const getByMode = (mode) => {
     if (mode === "ookla") return getOoklaServers();
     if (mode === "libre") return getLibreServers();
-    if (mode === "xxir") return getOoklaServers(); // xxir nodes are in ookla list
+    if (mode === "xxir") return XXIR_SERVERS;
 }
