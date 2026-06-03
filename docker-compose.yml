@@ -1,0 +1,51 @@
+# MySpeed-CN Docker Compose
+# Usage: docker compose up -d
+
+version: '3.8'
+
+services:
+  myspeed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Or use pre-built image:
+    # image: macrwfuse/myspeed-cn:latest
+    container_name: myspeed-cn
+    ports:
+      - "5216:5216"
+      # Uncomment for HTTPS:
+      # - "5217:5217"
+    volumes:
+      - myspeed-data:/myspeed/data
+    environment:
+      - TZ=Asia/Shanghai
+      # Uncomment for MySQL:
+      # - DB_TYPE=mysql
+      # - DB_HOST=mysql
+      # - DB_NAME=myspeed
+      # - DB_USER=myspeed
+      # - DB_PASS=your_password
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5216/api/info"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Uncomment for MySQL support:
+  # mysql:
+  #   image: mysql:8
+  #   container_name: myspeed-mysql
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=root_password
+  #     - MYSQL_DATABASE=myspeed
+  #     - MYSQL_USER=myspeed
+  #     - MYSQL_PASSWORD=your_password
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
+  #   restart: unless-stopped
+
+volumes:
+  myspeed-data:
+  # mysql-data:
