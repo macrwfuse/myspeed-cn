@@ -1,4 +1,4 @@
-name: Build Binaries (MySpeed-CN + xxir)
+name: Build Binaries
 
 on:
   workflow_call:
@@ -9,12 +9,6 @@ on:
       release_id:
         required: true
         type: string
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version tag'
-        required: false
-        default: 'dev'
 
 jobs:
   build-windows:
@@ -52,18 +46,10 @@ jobs:
       - name: Generate client embed
         run: bun run generate-client-embed
 
-      - name: Compile binary (Windows x64)
-        run: >
-          bun build --compile
-          --compile-autoload-package-json
-          --external pg-hstore
-          --external pg
-          --target=bun-windows-x64
-          server/index.js
-          --outfile MySpeed-CN.exe
+      - name: Compile binary
+        run: bun build --compile --compile-autoload-package-json --external pg-hstore --external pg --target=bun-windows-x64 server/index.js --outfile MySpeed.exe
 
       - name: Upload to Release
-        if: ${{ inputs.release_id }}
         uses: actions/github-script@v7
         with:
           script: |
@@ -72,15 +58,21 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: ${{ inputs.release_id }},
-              name: 'MySpeed-CN-windows-x64.exe',
-              data: fs.readFileSync('MySpeed-CN.exe')
+              name: 'MySpeed-windows-x64.exe',
+              data: fs.readFileSync('MySpeed.exe')
             });
 
-      - name: Upload artifact
+      - name: Upload artifact for MSI
         uses: actions/upload-artifact@v4
         with:
-          name: MySpeed-CN-windows-x64
-          path: MySpeed-CN.exe
+          name: MySpeed-windows-x64.exe
+          path: MySpeed.exe
+
+      - name: Upload build folder for MSI
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-folder
+          path: build
 
   build-linux:
     name: "Linux (${{ matrix.arch }})"
@@ -92,11 +84,11 @@ jobs:
           - arch: x64
             target: bun-linux-x64
             runner: ubuntu-latest
-            artifact_name: MySpeed-CN-linux-x64
+            artifact_name: MySpeed-linux-x64
           - arch: arm64
             target: bun-linux-arm64
             runner: ubuntu-24.04-arm
-            artifact_name: MySpeed-CN-linux-arm64
+            artifact_name: MySpeed-linux-arm64
 
     steps:
       - name: Checkout project
@@ -131,20 +123,12 @@ jobs:
         run: bun run generate-client-embed
 
       - name: Compile binary
-        run: >
-          bun build --compile
-          --compile-autoload-package-json
-          --external pg-hstore
-          --external pg
-          --target=${{ matrix.target }}
-          server/index.js
-          --outfile MySpeed-CN
+        run: bun build --compile --compile-autoload-package-json --external pg-hstore --external pg --target=${{ matrix.target }} server/index.js --outfile MySpeed
 
       - name: Rename binary
-        run: mv MySpeed-CN ${{ matrix.artifact_name }}
+        run: mv MySpeed ${{ matrix.artifact_name }}
 
       - name: Upload to Release
-        if: ${{ inputs.release_id }}
         uses: actions/github-script@v7
         with:
           script: |
@@ -156,12 +140,6 @@ jobs:
               name: '${{ matrix.artifact_name }}',
               data: fs.readFileSync('${{ matrix.artifact_name }}')
             });
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.artifact_name }}
 
   build-macos:
     name: "macOS (${{ matrix.arch }})"
@@ -172,10 +150,10 @@ jobs:
         include:
           - arch: x64
             target: bun-darwin-x64
-            artifact_name: MySpeed-CN-macos-x64
+            artifact_name: MySpeed-macos-x64
           - arch: arm64
             target: bun-darwin-arm64
-            artifact_name: MySpeed-CN-macos-arm64
+            artifact_name: MySpeed-macos-arm64
 
     steps:
       - name: Checkout project
@@ -210,20 +188,12 @@ jobs:
         run: bun run generate-client-embed
 
       - name: Compile binary
-        run: >
-          bun build --compile
-          --compile-autoload-package-json
-          --external pg-hstore
-          --external pg
-          --target=${{ matrix.target }}
-          server/index.js
-          --outfile MySpeed-CN
+        run: bun build --compile --compile-autoload-package-json --external pg-hstore --external pg --target=${{ matrix.target }} server/index.js --outfile MySpeed
 
       - name: Rename binary
-        run: mv MySpeed-CN ${{ matrix.artifact_name }}
+        run: mv MySpeed ${{ matrix.artifact_name }}
 
       - name: Upload to Release
-        if: ${{ inputs.release_id }}
         uses: actions/github-script@v7
         with:
           script: |
@@ -236,8 +206,50 @@ jobs:
               data: fs.readFileSync('${{ matrix.artifact_name }}')
             });
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+  build-zip:
+    name: "Source ZIP"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.artifact_name }}
+          bun-version: latest
+
+      - name: Install client dependencies
+        working-directory: client
+        run: bun install
+
+      - name: Build client
+        working-directory: client
+        run: bun run build
+
+      - name: Move build folder
+        run: mv client/build .
+
+      - name: Install server dependencies
+        run: bun install
+
+      - name: Generate migrations
+        run: bun run generate-migrations
+
+      - name: Generate integrations
+        run: bun run generate-integrations
+
+      - name: Create zip archive
+        run: zip -r MySpeed.zip build server package.json
+
+      - name: Upload to Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            await github.rest.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: ${{ inputs.release_id }},
+              name: 'MySpeed.zip',
+              data: fs.readFileSync('MySpeed.zip')
+            });
