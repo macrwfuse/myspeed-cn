@@ -21,10 +21,11 @@ RUN bun run generate-integrations
 FROM oven/bun:1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    tzdata ca-certificates openssl \
+    tzdata ca-certificates openssl curl \
     && rm -rf /var/lib/apt/lists/*
 
-ENV TZ=Etc/UTC
+# 默认时区设为 Asia/Shanghai
+ENV TZ=Asia/Shanghai
 
 WORKDIR /myspeed
 
@@ -36,5 +37,8 @@ COPY --from=client-build /client/build /myspeed/build
 VOLUME ["/myspeed/data"]
 
 EXPOSE 5216
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:5216/api/info/version || exit 1
 
 CMD ["bun", "run", "server/index.js"]
