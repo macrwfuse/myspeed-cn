@@ -1,5 +1,6 @@
-# MySpeed-CN Docker Build
+# MySpeed-CN with xxir Speed Test Provider
 # Multi-stage build for optimized image size
+# Includes: Ookla, LibreSpeed, Cloudflare, xxir (CDN) providers
 
 # Stage 1: Build frontend
 FROM oven/bun:1 AS client-build
@@ -15,9 +16,13 @@ FROM oven/bun:1 AS server-build
 
 WORKDIR /myspeed
 
+# Copy the full original MySpeed server
 COPY ./server /myspeed/server
 COPY ./scripts /myspeed/scripts
 COPY ./package.json /myspeed/package.json
+
+# Copy xxir provider and patched files
+COPY ./server/util/providers/xxir.js /myspeed/server/util/providers/xxir.js
 
 RUN bun install --frozen-lockfile
 RUN bun run generate-migrations
