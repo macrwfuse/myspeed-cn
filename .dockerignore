@@ -1,34 +1,12 @@
-# Git
-.git
-.gitignore
-.github
-
-# IDE
-.idea
-.vscode
-*.swp
-*.swo
-
-# Build artifacts
 node_modules
 client/node_modules
 build
-client/build
-dist
-*.exe
-
-# Data (runtime)
 data
-bin
-
-# Documentation
+.git
+.gitignore
+.idea
 docs
-*.md
-LICENSE
-
-# Misc
-crowdin.yml
 web
+*.md
 *.lock
 *.lockb
-.DS_Store
