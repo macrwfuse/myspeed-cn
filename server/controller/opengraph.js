@@ -4,9 +4,6 @@ import * as tests from './speedtests.js';
 import { html } from 'satori-html';
 import satori from 'satori';
 
-// Note: @resvg/resvg-js removed due to native module issues in compiled builds.
-// OpenGraph image generation returns SVG instead of PNG.
-
 async function generateOpenGraphImage(req) {
   const today = new Date();
   const yesterday = new Date();
@@ -157,7 +154,6 @@ async function generateOpenGraphImage(req) {
     </div>
   `;
 
-  // Return SVG directly (no PNG conversion without @resvg/resvg-js)
   const svg = await satori(markup, {
     width: 1200,
     height: 600,
@@ -171,7 +167,8 @@ async function generateOpenGraphImage(req) {
     ],
   });
 
-  return svg;
+  // Return SVG directly (no native module dependency)
+  return Buffer.from(svg);
 }
 
 export default generateOpenGraphImage;
