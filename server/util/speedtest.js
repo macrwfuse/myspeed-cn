@@ -16,6 +16,11 @@ export default async (mode, serverId, serverUrl) => {
         : mode === "libre" ? './bin/librespeed-cli' + (process.platform === "win32" ? ".exe" : "")
             : './bin/cfspeedtest' + (process.platform === "win32" ? ".exe" : "");
 
+    // Check if binary exists before trying to spawn
+    if (!fs.existsSync(binaryPath)) {
+        throw new Error(`测速组件 ${binaryPath} 不存在，请切换到 xxir CDN 模式或安装对应组件`);
+    }
+
     if (!interfacesModule.interfaces) throw new Error("No interfaces found");
 
     const currentInterface = await config.getValue("interface");

@@ -104,11 +104,23 @@ export const create = async (type = "auto", retried = false) => {
         sendFinished({ping, jitter, download, upload, time}).then(() => "");
     } catch (e) {
         console.log(e)
+        // Ensure error message is always a string (not object/array)
+        let errorMsg = e.message;
+        if (typeof errorMsg === 'object') {
+            try { errorMsg = JSON.stringify(errorMsg); } catch { errorMsg = String(errorMsg); }
+        }
+        if (typeof errorMsg !== 'string') errorMsg = String(errorMsg || "Unknown error");
+
+        // Friendly message for missing binary
+        if (errorMsg.includes('ENOENT') && errorMsg.includes('speedtest')) {
+            errorMsg = "测速组件未找到，请切换到 xxir CDN 模式测速";
+        }
+
         if (!retried) return create(type, true);
-        let testResult = await tests.create(-1, -1, -1, null, 0, type, null, e.message);
-        await sendError(e.message);
+        let testResult = await tests.create(-1, -1, -1, null, 0, type, null, errorMsg);
+        await sendError(errorMsg);
         setRunning(false, false);
-        console.log(`Test #${testResult} was not executed successfully. Please try reconnecting to the internet or restarting the software: ` + e.message);
+        console.log(`Test #${testResult} was not executed successfully: ` + errorMsg);
     }
 }
 
