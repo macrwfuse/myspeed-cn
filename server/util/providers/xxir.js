@@ -31,6 +31,7 @@ const REGION_ENDPOINTS = {
     east: {
         name: '华东节点',
         ping: 'https://lf3-cdn-tos.bytecdntp.com/',
+        pingFallback: 'https://www.baidu.com/favicon.ico',
         download: [
             "https://lf9-apk.ugapk.cn/package/apk/aweme/5072_340301/aweme_douyin-huidu-gw-aweme-3430_v5072_340301_eea8_1747058635.apk",
             "https://lf3-cdn-tos.bytegoofy.com/obj/douyin-pc-client/7044145585217083655/releases/8293088/1.0.8/win32-ia32/douyin-v1.0.8-win32-ia32-douyin.exe",
@@ -46,6 +47,7 @@ const REGION_ENDPOINTS = {
     north: {
         name: '华北节点',
         ping: 'https://maponline0.bdimg.com/tile/?qt=vtile&x=0&y=0&z=17',
+        pingFallback: 'https://www.baidu.com/favicon.ico',
         download: [
             "https://gw.alipayobjects.com/os/volans-demo/93211a67-0eed-40ff-8a48-f6c137a88781/MiniProgramStudio-3.1.3.exe",
             "https://8c8947-1956185621.antpcdn.com:19001/b/pkg-ant.baidu.com/issue/netdisk/LinuxGuanjia/4.17.7/baidunetdisk_4.17.7_amd64.deb",
@@ -59,6 +61,7 @@ const REGION_ENDPOINTS = {
     south: {
         name: '华南节点',
         ping: 'https://lf3-cdn-tos.bytecdntp.com/',
+        pingFallback: 'https://cdn.staticfile.org/favicon.ico',
         download: [
             "https://wwwstatic.vivo.com.cn/vivoportal/files/download/app/20231026/350bda07c8a0719919bcadbf5aea3538.apk",
             "https://cd.pddpic.com/android_dev/2023-11-08/a35eaee8e1f9f018cc40ace12931f7a2.apk",
@@ -73,6 +76,7 @@ const REGION_ENDPOINTS = {
     west: {
         name: '西南节点',
         ping: 'https://lf3-cdn-tos.bytecdntp.com/',
+        pingFallback: 'https://cdn.bootcdn.net/favicon.ico',
         download: [
             "https://downapp.sina.cn/m/06/sinaNews_8.27.0_1719288606_4386_3538_armeabi-v7a.apk",
             "https://i1.sinaimg.cn/edu/sinaopen/SinaOpencourse_V2.02.apk",
@@ -205,6 +209,8 @@ async function detectBestRegion() {
     await Promise.allSettled(regions.map(async (region) => {
         const ep = REGION_ENDPOINTS[region];
         const latencies = [];
+        
+        // Try primary ping endpoint
         for (let i = 0; i < CONFIG.pingCount; i++) {
             const start = performance.now();
             try {
@@ -215,6 +221,21 @@ async function detectBestRegion() {
             }
             await new Promise(r => setTimeout(r, 50));
         }
+        
+        // If primary failed, try fallback
+        if (latencies.length === 0 && ep.pingFallback) {
+            for (let i = 0; i < CONFIG.pingCount; i++) {
+                const start = performance.now();
+                try {
+                    await httpGet(makeUrl(ep.pingFallback), null, null, CONFIG.regionTimeout);
+                    latencies.push(performance.now() - start);
+                } catch {
+                    // skip failed ping
+                }
+                await new Promise(r => setTimeout(r, 50));
+            }
+        }
+        
         if (latencies.length > 0) {
             results[region] = Math.min(...latencies);
         }
@@ -240,19 +261,34 @@ async function detectBestRegion() {
 
 async function pingTest(regionKey, count = 5) {
     const region = REGION_ENDPOINTS[regionKey];
-    const url = makeUrl(region.ping);
     const latencies = [];
 
+    // Try primary ping endpoint
     for (let i = 0; i < count; i++) {
         const start = performance.now();
         try {
-            await httpGet(url, () => { });
+            await httpGet(makeUrl(region.ping), () => { });
             const rtt = performance.now() - start;
             latencies.push(rtt);
         } catch {
             // skip failed ping
         }
         await new Promise(r => setTimeout(r, 100));
+    }
+
+    // If primary failed, try fallback
+    if (latencies.length === 0 && region.pingFallback) {
+        for (let i = 0; i < count; i++) {
+            const start = performance.now();
+            try {
+                await httpGet(makeUrl(region.pingFallback), () => { });
+                const rtt = performance.now() - start;
+                latencies.push(rtt);
+            } catch {
+                // skip failed ping
+            }
+            await new Promise(r => setTimeout(r, 100));
+        }
     }
 
     if (latencies.length === 0) return { latency: 0, jitter: 0 };
