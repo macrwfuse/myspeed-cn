@@ -434,14 +434,25 @@ async function uploadTest() {
 
 /**
  * Run a full xxir speed test.
- * @param {string} nodeId - "xxir-1" (auto-detect best region) or "xxir-2" etc.
+ * @param {string} nodeId - "xxir-auto" (auto-detect), "xxir-east", "xxir-north", "xxir-south", "xxir-west"
  * @returns {Object} Test result in MySpeed-compatible format
  */
-export async function runXxirTest(nodeId = 'xxir-1') {
+export async function runXxirTest(nodeId = 'xxir-auto') {
     const startTime = performance.now();
 
-    // 1. Auto-detect best region based on network geography
-    const bestRegion = await detectBestRegion();
+    // Resolve region: auto-detect or use specific region
+    let bestRegion;
+    if (nodeId === 'xxir-auto' || nodeId === 'xxir-1') {
+        bestRegion = await detectBestRegion();
+    } else if (nodeId.startsWith('xxir-')) {
+        bestRegion = nodeId.replace('xxir-', '');
+        if (!REGION_ENDPOINTS[bestRegion]) {
+            bestRegion = await detectBestRegion();
+        }
+    } else {
+        bestRegion = await detectBestRegion();
+    }
+
     const regionInfo = REGION_ENDPOINTS[bestRegion];
 
     // 2. Ping

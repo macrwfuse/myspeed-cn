@@ -42,7 +42,7 @@ export const run = async (retryAuto = false) => {
         throw {message: "No provider selected"};
     }
 
-    let serverId = mode === "cloudflare" ? 0 : (mode === "xxir" ? (await config.getValue("xxirId") || "xxir-1") : await config.getValue(mode + "Id"));
+    let serverId = mode === "cloudflare" ? 0 : (mode === "xxir" ? (await config.getValue("xxirId") || "xxir-auto") : await config.getValue(mode + "Id"));
     let serverUrl = mode === "libre" ? await config.getValue("libreUrl") : undefined;
 
     if (serverId === "none")

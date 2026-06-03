@@ -8,7 +8,7 @@ import { runXxirTest } from './providers/xxir.js';
 export default async (mode, serverId, serverUrl) => {
     // xxir mode: native Node.js multi-stream HTTP test, no CLI binary needed
     if (mode === "xxir") {
-        const nodeId = serverId || "xxir-1";
+        const nodeId = serverId || "xxir-auto";
         return await runXxirTest(nodeId);
     }
 
