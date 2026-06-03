@@ -1,4 +1,4 @@
-# MySpeed-CN Docker Compose
+# MySpeed-CN Docker Compose (with xxir CDN speed test support)
 # Usage: docker compose up -d
 
 version: '3.8'
@@ -25,6 +25,8 @@ services:
       # - DB_NAME=myspeed
       # - DB_USER=myspeed
       # - DB_PASS=your_password
+      # Uncomment to auto-run speedtest on startup:
+      # - RUN_TEST_ON_STARTUP=true
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5216/api/info"]
