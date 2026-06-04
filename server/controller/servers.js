@@ -82,7 +82,7 @@ export const OOKLA_CN_SERVERS = {
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "4gsuzhou1.speedtest.jsinfo.net"
+        host: "4gsuzhou1.speedtest.jsinfo.net:8080"
     },
     "16204": {
         name: "苏州",
@@ -90,7 +90,7 @@ export const OOKLA_CN_SERVERS = {
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "speedtest.jsqiuying.com"
+        host: "speedtest.jsqiuying.com:8080"
     },
     "24447": {
         name: "上海",
@@ -98,7 +98,7 @@ export const OOKLA_CN_SERVERS = {
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "mobile.shunicomtest.com"
+        host: "mobile.shunicomtest.com:8080"
     },
     "30852": {
         name: "昆山",
@@ -106,7 +106,7 @@ export const OOKLA_CN_SERVERS = {
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "speedtest.dukekunshan.edu.cn"
+        host: "speedtest.dukekunshan.edu.cn:8080"
     },
     "36663": {
         name: "镇江",
@@ -114,7 +114,7 @@ export const OOKLA_CN_SERVERS = {
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "5gzhenjiang.speedtest.jsinfo.net"
+        host: "5gzhenjiang.speedtest.jsinfo.net:8080"
     },
     "43752": {
         name: "北京",
@@ -122,7 +122,7 @@ export const OOKLA_CN_SERVERS = {
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "beijing.unicomtest.com"
+        host: "beijing.unicomtest.com:8080"
     },
     "59387": {
         name: "宁波",
@@ -130,7 +130,7 @@ export const OOKLA_CN_SERVERS = {
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "cesu-nb.zjtelecom.com.cn"
+        host: "cesu-nb.zjtelecom.com.cn:8080"
     },
     "17265": {
         name: "中和",
@@ -138,7 +138,7 @@ export const OOKLA_CN_SERVERS = {
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "fetsz1.seed.net.tw"
+        host: "fetsz1.seed.net.tw:8080"
     },
     "73010": {
         name: "贺兰",
@@ -146,7 +146,7 @@ export const OOKLA_CN_SERVERS = {
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "arslantel.online"
+        host: "arslantel.online:8080"
     }
 };
 
