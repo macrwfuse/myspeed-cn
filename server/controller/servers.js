@@ -154,6 +154,28 @@ export const XXIR_SERVERS = {
         category: "edu",
         description: "教育网多线节点 (武汉/湖北)"
     },
+    "edu-nju-fs": {
+        name: "教育网 · 南大文件服务",
+        sponsor: "南京大学",
+        country: "China",
+        cc: "CN",
+        distance: 0,
+        host: "fs.nju.edu.cn",
+        type: "xxir",
+        category: "edu",
+        description: "南京大学文件服务测速节点 (fs.nju.edu.cn)"
+    },
+    "edu-nju-test": {
+        name: "教育网 · 南大测速",
+        sponsor: "南京大学",
+        country: "China",
+        cc: "CN",
+        distance: 0,
+        host: "test.nju.edu.cn",
+        type: "xxir",
+        category: "edu",
+        description: "南京大学 LibreSpeed 测速节点 (test.nju.edu.cn)"
+    },
 
     // ── 🌍 海外 ──
     "cloudflare": {

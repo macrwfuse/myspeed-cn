@@ -4,7 +4,7 @@
 
 ## ✨ 特性
 
-- 🚀 内置 9 个中国测速节点（电信/联通/教育网）
+- 🚀 内置 11 个中国测速节点（电信/联通/教育网/南京大学）
 - 🖥️ Windows x64 独立可执行文件，无需安装依赖
 - 🔧 移除原生模块依赖，避免 Windows 编译问题
 - 📊 支持 Ookla Speedtest / LibreSpeed / Cloudflare 三种测速模式
@@ -51,6 +51,17 @@ curl -fsSL https://raw.githubusercontent.com/macrwfuse/myspeed-cn/main/scripts/d
 | 73010 | 贺兰 | Arslan Telecom | arslantel.online |
 
 节点来源: [spiritLHLS/speedtest.net-CN-ID](https://github.com/spiritLHLS/speedtest.net-CN-ID)
+
+### xxir 自定义教育网节点
+
+| 节点 ID | 名称 | 服务器地址 | 说明 |
+|---|---|---|---|
+| edu-ustc | 教育网 · 中科大 | test.ustc.edu.cn | 中国科学技术大学 |
+| edu-tsinghua | 教育网 · 清华 | iptv.tsinghua.edu.cn | 清华大学 |
+| edu-sjtu | 教育网 · 上交 | ftp.sjtu.edu.cn | 上海交通大学 |
+| edu-multi | 教育网 · 多线 | speedtest.im | 武汉/湖北多线 |
+| edu-nju-fs | 教育网 · 南大文件服务 | fs.nju.edu.cn | 南京大学文件服务测速 |
+| edu-nju-test | 教育网 · 南大测速 | test.nju.edu.cn | 南京大学 LibreSpeed 测速 |
 
 ## 🔨 从源码编译
 
@@ -333,7 +344,7 @@ docker run -d \
 
 | 项目 | 原版 MySpeed | MySpeed-CN |
 |---|---|---|
-| 中国测速节点 | ❌ 需手动添加 | ✅ 内置 9 个 |
+| 中国测速节点 | ❌ 需手动添加 | ✅ 内置 11 个 |
 | @resvg/resvg-js | ✅ 必需 | ❌ 已移除 |
 | OG 图片格式 | PNG | SVG |
 | Windows 编译 | 需处理原生模块 | ✅ 直接编译 |
