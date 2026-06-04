@@ -1,26 +1,72 @@
 import fs from 'node:fs';
 
-// xxir CDN-based speed test nodes (speed.xxir.com)
+// University + global speed test nodes
 export const XXIR_SERVERS = {
-    "xxir-1": {
-        name: "CDN节点1 (国内多源)",
-        sponsor: "speed.xxir.com",
+    "edu-ustc": {
+        name: "教育网 · 中科大",
+        sponsor: "中国科学技术大学",
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "speed.xxir.com",
+        host: "test.ustc.edu.cn",
         type: "xxir",
-        description: "30个国内CDN源随机下载测速（抖音/京东/百度/阿里等）"
+        category: "edu",
+        description: "中国科学技术大学测速节点"
     },
-    "xxir-2": {
-        name: "CDN节点2 (分组随机)",
-        sponsor: "speed.xxir.com",
+    "edu-tsinghua": {
+        name: "教育网 · 清华",
+        sponsor: "清华大学",
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "speed.xxir.com",
+        host: "iptv.tsinghua.edu.cn",
         type: "xxir",
-        description: "7组CDN源随机选择一组后随机下载测速"
+        category: "edu",
+        description: "清华大学测速节点"
+    },
+    "edu-sjtu": {
+        name: "教育网 · 上交",
+        sponsor: "上海交通大学",
+        country: "China",
+        cc: "CN",
+        distance: 0,
+        host: "ftp.sjtu.edu.cn",
+        type: "xxir",
+        category: "edu",
+        description: "上海交通大学测速节点"
+    },
+    "edu-nju-fs": {
+        name: "教育网 · 南大文件服务",
+        sponsor: "南京大学",
+        country: "China",
+        cc: "CN",
+        distance: 0,
+        host: "fs.nju.edu.cn",
+        type: "xxir",
+        category: "edu",
+        description: "南京大学文件服务测速节点"
+    },
+    "edu-nju-test": {
+        name: "教育网 · 南大测速",
+        sponsor: "南京大学",
+        country: "China",
+        cc: "CN",
+        distance: 0,
+        host: "test.nju.edu.cn",
+        type: "xxir",
+        category: "edu",
+        description: "南京大学 LibreSpeed 测速节点"
+    },
+    "cloudflare": {
+        name: "CloudFlare · 全球CDN",
+        sponsor: "CloudFlare",
+        country: "Global",
+        cc: "US",
+        distance: 0,
+        host: "speed.cloudflare.com",
+        type: "xxir",
+        category: "global",
+        description: "CloudFlare 全球CDN测速节点"
     },
 };
 
@@ -50,7 +96,7 @@ export const getOoklaServers = () => {
         } catch { }
     }
 
-    // Merge xxir nodes (xxir takes priority)
+    // Merge university + global nodes
     ooklaServers = { ...servers, ...XXIR_SERVERS };
 
     return ooklaServers;

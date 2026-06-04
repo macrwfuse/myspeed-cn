@@ -2,16 +2,16 @@
 
 ## 概述
 
-将 [speed.xxir.com](https://speed.xxir.com/) 的下载测速节点集成到 MySpeed 中，作为第 4 种测速 provider（与 Ookla、LibreSpeed、Cloudflare 并列）。
+将教育网高校节点（中科大/清华/上交/南大）和 CloudFlare 全球 CDN 集成到 MySpeed 中，作为第 4 种测速 provider（与 Ookla、LibreSpeed、Cloudflare 并列）。
 
 ### 与原版 provider 的区别
 
 | 特性 | Ookla/LibreSpeed/Cloudflare | xxir |
 |------|---------------------------|------|
 | 实现方式 | 调用 CLI 二进制文件 | Node.js 原生 HTTP 多流并发 |
-| 下载源 | 专用测速服务器 | 国内真实 CDN 文件（抖音/京东/百度等） |
+| 下载源 | 专用测速服务器 | 高校 LibreSpeed 节点 + CloudFlare |
 | 需要下载二进制 | ✅ | ❌ |
-| 适合中国大陆 | ⚠️ 需要可用节点 | ✅ 直接使用国内 CDN |
+| 适合中国大陆 | ⚠️ 需要可用节点 | ✅ 直接使用教育网节点 |
 
 ## 文件清单
 
@@ -176,18 +176,25 @@ export const run = async (retryAuto = false) => {
 
 ## 节点说明
 
-### xxir-1 (CDN节点1)
+### edu-ustc (教育网 · 中科大)
 
-从 30 个国内 CDN URL 中随机选择一个下载。覆盖：
-- 抖音 APK、AcFun 直播、七牛工具
-- 支付宝小程序 Studio、百度网盘
-- 新浪新闻、新浪微博、搜狐新闻
-- 网易 UU、拼多多、京东
-- 剪映、凤凰网视频、VIVO 应用商店等
+使用中国科学技术大学 LibreSpeed 测速节点 (test.ustc.edu.cn)。
 
-### xxir-2 (CDN节点2)
+### edu-tsinghua (教育网 · 清华)
 
-从 7 个分组中随机选一组，再从该组随机选一个 URL（两层随机）。
+使用清华大学 LibreSpeed 测速节点 (iptv.tsinghua.edu.cn)。
+
+### edu-sjtu (教育网 · 上交)
+
+使用上海交通大学 LibreSpeed 测速节点 (ftp.sjtu.edu.cn)。
+
+### edu-nju-fs / edu-nju-test (教育网 · 南大)
+
+使用南京大学文件服务和 LibreSpeed 测速节点。
+
+### cloudflare (CloudFlare · 全球CDN)
+
+使用 CloudFlare 全球 CDN 测速节点。
 
 ## 测试验证
 

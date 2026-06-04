@@ -2,13 +2,11 @@
  * xxir Speed Test Provider — Enhanced CN Edition
  *
  * Integrates nodes from:
- *   - speed.xxir.com (CDN multi-source)
- *   - speedtest.im (运营商专线 + 教育网)
- *   - Additional ISP-specific endpoints
+ *   - University-hosted LibreSpeed endpoints (中科大/清华/上交/南大)
+ *   - CloudFlare global CDN
  *
  * Node categories:
- *   🌐 CDN 自动选择 — 多区域CDN，自动就近
- *   📡 运营商专线 — 移动/电信/联通/教育网
+ *   🎓 教育网 — 高校 LibreSpeed 节点
  *   🌍 海外节点 — CloudFlare 等
  */
 
@@ -22,197 +20,7 @@ import { URL } from 'node:url';
 
 const REGION_ENDPOINTS = {
     // ═══════════════════════════════════════════
-    // 🌐 CDN 自动选择节点 (speed.xxir.com)
-    // ═══════════════════════════════════════════
-
-    // 华东 (电信/联通骨干) - 抖音、京东、百度等
-    east: {
-        name: '华东节点 (CDN)',
-        category: 'cdn',
-        ping: 'https://lf3-cdn-tos.bytecdntp.com/',
-        pingFallback: 'https://www.baidu.com/favicon.ico',
-        download: [
-            "https://lf9-apk.ugapk.cn/package/apk/aweme/5072_340301/aweme_douyin-huidu-gw-aweme-3430_v5072_340301_eea8_1747058635.apk",
-            "https://lf3-cdn-tos.bytegoofy.com/obj/douyin-pc-client/7044145585217083655/releases/8293088/1.0.8/win32-ia32/douyin-v1.0.8-win32-ia32-douyin.exe",
-            "https://lf6-cdn-tos.bytegoofy.com/obj/douyin-pc-client/7044145585217083655/releases/8293088/1.0.8/win32-ia32/douyin-v1.0.8-win32-ia32-douyin.exe",
-            "https://lf3-package.vlabstatic.com/obj/faceu-packages/Jianying_split_4_8_0_10791_jianyingpro_0.exe",
-            "https://lf6-package.vlabstatic.com/obj/faceu-packages/Jianying_split_4_8_0_10791_jianyingpro_0.exe",
-            "https://lf9-package.vlabstatic.com/obj/faceu-packages/Jianying_split_4_8_0_10791_jianyingpro_0.exe",
-            "https://apk.360buyimg.com/build-cms/V5.2.0-4258-800000136-bazaar-64bit.apk",
-            "https://download.jr.jd.com/downapp/jrapp_jr9631.apk",
-        ],
-    },
-    // 华北 (阿里云、百度云CDN)
-    north: {
-        name: '华北节点 (CDN)',
-        category: 'cdn',
-        ping: 'https://maponline0.bdimg.com/tile/?qt=vtile&x=0&y=0&z=17',
-        pingFallback: 'https://www.baidu.com/favicon.ico',
-        download: [
-            "https://gw.alipayobjects.com/os/volans-demo/93211a67-0eed-40ff-8a48-f6c137a88781/MiniProgramStudio-3.1.3.exe",
-            "https://8c8947-1956185621.antpcdn.com:19001/b/pkg-ant.baidu.com/issue/netdisk/LinuxGuanjia/4.17.7/baidunetdisk_4.17.7_amd64.deb",
-            "https://1270e8-3086970414.antpcdn.com:19001/b/pkg-ant.baidu.com/issue/netdisk/yunguanjia/BaiduNetdisk_7.55.1.101.exe",
-            "https://cdn.aixifan.com/downloads/AcfunLive-Setup-1.9.0.200-ReleaseX64_6d5c40.exe",
-            "https://devtools.qiniu.com/linux/amd64/qrsctl",
-            "https://uu.gdl.netease.com/4112/UU-4.68.1.exe",
-        ],
-    },
-    // 华南 (腾讯、网易CDN)
-    south: {
-        name: '华南节点 (CDN)',
-        category: 'cdn',
-        ping: 'https://lf3-cdn-tos.bytecdntp.com/',
-        pingFallback: 'https://cdn.staticfile.org/favicon.ico',
-        download: [
-            "https://wwwstatic.vivo.com.cn/vivoportal/files/download/app/20231026/350bda07c8a0719919bcadbf5aea3538.apk",
-            "https://cd.pddpic.com/android_dev/2023-11-08/a35eaee8e1f9f018cc40ace12931f7a2.apk",
-            "https://cd.pddpic.com/android_dev/2024-06-26/06027b4121edcd1f106d992128a7124b.apk",
-            "https://cd.pddpic.com/volantis-open/volantis-common/app/com.xunmeng.workBench/Release_1834716.exe",
-            "https://rls.tapimg.com/pub2/202310/64a7c775fa5503fc30f46c6fea6f9faf.apk",
-            "https://open-image.ws.126.net/android_phone_release-sp_open-v9.9.9-v0a5b3c1dc0df472bb2fb057d0a5426c3.apk",
-            "https://open-image.ws.126.net/android_phone_release-sp_open-v9.10.1-vb7b79d6b531448baaca3a81e7fbdc13f.apk",
-        ],
-    },
-    // 西南 (新浪、搜狐CDN)
-    west: {
-        name: '西南节点 (CDN)',
-        category: 'cdn',
-        ping: 'https://lf3-cdn-tos.bytecdntp.com/',
-        pingFallback: 'https://cdn.bootcdn.net/favicon.ico',
-        download: [
-            "https://downapp.sina.cn/m/06/sinaNews_8.27.0_1719288606_4386_3538_armeabi-v7a.apk",
-            "https://i1.sinaimg.cn/edu/sinaopen/SinaOpencourse_V2.02.apk",
-            "https://upgrade.k.sohu.com/upgrade/SohuNews_V7.3.6_0421110326_online_1003.apk",
-            "https://statics.itc.cn/lt-app/sohumobile_official_gray_optimizeRelease_4_1.0.3_01161850.apk",
-            "https://pkg.sinaimg.cn/weibo_13.11.1_vcode_6489_wm_3333_1001_so_32_64_weibo_5395_205935.apk",
-            "https://video19.ifeng.com/video09/2022/07/06/p6950362006465552946-102-162611.mp4",
-        ],
-    },
-
-    // ═══════════════════════════════════════════
-    // 📡 运营商专线节点 (speedtest.im)
-    // ═══════════════════════════════════════════
-
-    // 移动节点 — 北京&河北专线
-    'cmcc-bj': {
-        name: '移动 · 北京&河北专线',
-        category: 'isp',
-        isp: '中国移动',
-        ping: 'http://211.136.30.118:9000/speed/10.data',
-        pingFallback: 'http://221.179.144.126:9000/speed/10.data',
-        download: [
-            'http://211.136.30.118:9000/speed/100000.data',
-            'http://221.179.144.126:9000/speed/100000.data',
-            'http://211.136.30.102:9001/speed/100000.data',
-            'http://211.136.30.98:9000/speed/100000.data',
-            'http://211.136.30.110:9000/speed/100000.data',
-            'http://211.136.30.122:9000/speed/100000.data',
-            'http://211.136.30.114:9000/speed/100000.data',
-            'http://211.136.30.126:9000/speed/100000.data',
-            'http://211.136.30.102:9000/speed/100000.data',
-            'http://211.136.30.106:9000/speed/100000.data',
-        ],
-        upload: [
-            'http://211.136.30.118:9000/speed/10.data',
-            'http://221.179.144.126:9000/speed/10.data',
-            'http://211.136.30.102:9001/speed/10.data',
-            'http://211.136.30.98:9000/speed/10.data',
-            'http://211.136.30.110:9000/speed/10.data',
-            'http://211.136.30.122:9000/speed/10.data',
-        ],
-    },
-
-    // 移动节点 — 全国多线
-    'cmcc-all': {
-        name: '移动 · 全国多线',
-        category: 'isp',
-        isp: '中国移动',
-        ping: 'http://111.11.36.122:9000/speed/10.data',
-        pingFallback: 'http://111.63.234.18:9000/speed/10.data',
-        download: [
-            'http://111.11.36.122:9000/speed/100000.data',
-            'http://111.11.20.226:9000/speed/100000.data',
-            'http://111.63.234.18:9000/speed/100000.data',
-            'http://111.11.78.14:9000/speed/100000.data',
-            'http://111.11.32.170:9000/speed/100000.data',
-            'http://111.11.20.234:9000/speed/100000.data',
-            'http://111.11.78.18:9000/speed/100000.data',
-        ],
-        upload: [
-            'http://111.11.36.122:9000/speed/10.data',
-            'http://111.11.20.226:9000/speed/10.data',
-            'http://111.63.234.18:9000/speed/10.data',
-            'http://111.11.78.14:9000/speed/10.data',
-        ],
-    },
-
-    // 电信节点 — 广东专线
-    'ct-gd': {
-        name: '电信 · 广东专线',
-        category: 'isp',
-        isp: '中国电信',
-        ping: 'http://sz.10000gd.tech:12348/shmfile/100',
-        pingFallback: 'http://gz.10000gd.tech:12348/shmfile/100',
-        download: [
-            'http://sz.10000gd.tech:12348/shmfile/100',
-            'http://gz.10000gd.tech:12348/shmfile/100',
-            'http://jm.10000gd.tech:12348/shmfile/100',
-            'http://yf.10000gd.tech:12348/shmfile/100',
-            'http://zh.10000gd.tech:12348/shmfile/100',
-            'http://zq.10000gd.tech:12348/shmfile/100',
-            'http://jy.10000gd.tech:12348/shmfile/100',
-            'http://st.10000gd.tech:12348/shmfile/100',
-            'http://hz.10000gd.tech:12348/shmfile/100',
-            'http://sg.10000gd.tech:12348/shmfile/100',
-            'http://sw.10000gd.tech:12348/shmfile/100',
-            'http://hy.10000gd.tech:12348/shmfile/100',
-            'http://zj.10000gd.tech:12348/shmfile/100',
-            'http://cz.10000gd.tech:12348/shmfile/100',
-            'http://qy.10000gd.tech:12348/shmfile/100',
-            'http://mz.10000gd.tech:12348/shmfile/100',
-            'http://mm.10000gd.tech:12348/shmfile/100',
-            'http://zs.10000gd.tech:12348/shmfile/100',
-            'http://yj.10000gd.tech:12348/shmfile/100',
-            'http://dg.10000gd.tech:12348/shmfile/100',
-            'http://fs.10000gd.tech:12348/shmfile/100',
-            'http://yb.10000gd.tech:12348/shmfile/100',
-            'http://yd.10000gd.tech:12348/shmfile/100',
-            'http://yx.10000gd.tech:12348/shmfile/100',
-            'http://zsj.10000gd.tech:12348/shmfile/100',
-        ],
-        upload: [
-            'http://sz.10000gd.tech:12348/upload',
-            'http://gz.10000gd.tech:12348/upload',
-            'http://jm.10000gd.tech:12348/upload',
-            'http://yf.10000gd.tech:12348/upload',
-            'http://zh.10000gd.tech:12348/upload',
-            'http://zq.10000gd.tech:12348/upload',
-            'http://jy.10000gd.tech:12348/upload',
-            'http://st.10000gd.tech:12348/upload',
-            'http://hz.10000gd.tech:12348/upload',
-            'http://sg.10000gd.tech:12348/upload',
-        ],
-    },
-
-    // 联通节点 — 全国多线
-    'cu-all': {
-        name: '联通 · 全国多线',
-        category: 'isp',
-        isp: '中国联通',
-        ping: 'http://113.229.96.166:8800/Dat/upServer',
-        pingFallback: 'http://60.22.32.158:8800/Dat/upServer',
-        download: [
-            'http://113.229.96.166:8800/Dat/DownloadServer',
-            'http://60.22.32.158:8800/Dat/DownloadServer',
-        ],
-        upload: [
-            'http://113.229.96.166:8800/Dat/upServer',
-            'http://60.22.32.158:8800/Dat/upServer',
-        ],
-    },
-
-    // ═══════════════════════════════════════════
-    // 🎓 教育网节点 (speedtest.im)
+    // 🎓 教育网节点 (university-hosted)
     // ═══════════════════════════════════════════
 
     'edu-ustc': {
@@ -260,23 +68,6 @@ const REGION_ENDPOINTS = {
         ],
     },
 
-    'edu-multi': {
-        name: '教育网 · 多线',
-        category: 'edu',
-        ping: 'https://219.140.61.101/backend/empty.php?cors=1',
-        pingFallback: 'https://119.36.86.250:81/backend/empty.php?cors=1',
-        download: [
-            'https://219.140.61.101/backend/garbage.php?cors=1&ckSize=100',
-            'https://119.36.86.250:81/backend/garbage.php?cors=1&ckSize=100',
-            'http://211.67.53.2/backend/garbage.php?cors=1&ckSize=100',
-        ],
-        upload: [
-            'https://219.140.61.101/backend/empty.php?cors=1',
-            'https://119.36.86.250:81/backend/empty.php?cors=1',
-            'http://211.67.53.2/backend/empty.php?cors=1',
-        ],
-    },
-
     // 南京大学 · 文件服务 (fs.nju.edu.cn)
     'edu-nju-fs': {
         name: '教育网 · 南大文件服务',
@@ -304,37 +95,6 @@ const REGION_ENDPOINTS = {
         ],
         upload: [
             'https://test.nju.edu.cn/backend/empty.php?cors=1',
-        ],
-    },
-
-    // ═══════════════════════════════════════════
-    // 🎓 教育网 · 全源合并节点 (LibreSpeed)
-    // 来源: builtin-node-config.js 节点6方案
-    // 合并中科大/清华/上交/南大/武汉理工/湖北/武汉全部LibreSpeed节点
-    // ═══════════════════════════════════════════
-
-    'edu-all': {
-        name: '教育网 · 高校全源合并',
-        category: 'edu',
-        ping: 'https://test.ustc.edu.cn/backend/empty.php?cors=1',
-        pingFallback: 'https://iptv.tsinghua.edu.cn/st/empty.php?cors=1',
-        download: [
-            'https://test.ustc.edu.cn/backend/garbage.php?cors=1&ckSize=100',
-            'https://iptv.tsinghua.edu.cn/st/garbage.php?cors=1&ckSize=100',
-            'https://ftp.sjtu.edu.cn/speedtest/backend/garbage.php?cors=1&ckSize=100',
-            'https://test.nju.edu.cn/backend/garbage.php?cors=1&ckSize=100',
-            'https://219.140.61.101/backend/garbage.php?cors=1&ckSize=100',
-            'https://119.36.86.250:81/backend/garbage.php?cors=1&ckSize=100',
-            'http://211.67.53.2/backend/garbage.php?cors=1&ckSize=100',
-        ],
-        upload: [
-            'https://test.ustc.edu.cn/backend/empty.php?cors=1',
-            'https://iptv.tsinghua.edu.cn/st/empty.php?cors=1',
-            'https://ftp.sjtu.edu.cn/speedtest/backend/empty.php?cors=1',
-            'https://test.nju.edu.cn/backend/empty.php?cors=1',
-            'https://219.140.61.101/backend/empty.php?cors=1',
-            'https://119.36.86.250:81/backend/empty.php?cors=1',
-            'http://211.67.53.2/backend/empty.php?cors=1',
         ],
     },
 
@@ -769,7 +529,7 @@ export async function runXxirTest(nodeId = 'xxir-auto') {
     const totalTime = Math.round((performance.now() - startTime) / 1000);
 
     // Derive the actual host from the region's ping URL
-    let host = 'speed.xxir.com';
+    let host = 'test.ustc.edu.cn';
     try {
         const pingUrl = regionInfo.ping || regionInfo.pingFallback || '';
         host = new URL(pingUrl).host || host;

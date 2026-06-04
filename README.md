@@ -59,7 +59,6 @@ curl -fsSL https://raw.githubusercontent.com/macrwfuse/myspeed-cn/main/scripts/d
 | edu-ustc | 教育网 · 中科大 | test.ustc.edu.cn | 中国科学技术大学 |
 | edu-tsinghua | 教育网 · 清华 | iptv.tsinghua.edu.cn | 清华大学 |
 | edu-sjtu | 教育网 · 上交 | ftp.sjtu.edu.cn | 上海交通大学 |
-| edu-multi | 教育网 · 多线 | speedtest.im | 武汉/湖北多线 |
 | edu-nju-fs | 教育网 · 南大文件服务 | fs.nju.edu.cn | 南京大学文件服务测速 |
 | edu-nju-test | 教育网 · 南大测速 | test.nju.edu.cn | 南京大学 LibreSpeed 测速 |
 

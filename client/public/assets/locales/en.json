@@ -47,7 +47,7 @@
       "ookla_desc": "Popular provider with global server network",
       "libre_desc": "Open-source, self-hostable speedtest",
       "cloudflare_desc": "Fast CDN-based testing",
-      "xxir_desc": "CDN-based multi-source speedtest (speed.xxir.com)"
+      "xxir_desc": "University-hosted education network speedtest"
     }
   },
   "dropdown": {
