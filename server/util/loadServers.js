@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { getJson } from './http.js';
-import { XXIR_SERVERS } from '../controller/servers.js';
+import { XXIR_SERVERS, OOKLA_CN_SERVERS, LIBRE_CN_SERVERS } from '../controller/servers.js';
 
 const sources = [
     {
@@ -42,17 +42,25 @@ for (const {file, url, format, isCurrent} of sources) {
         .then((data) => {
             let servers = Object.fromEntries((data ?? []).map((row) => [row.id, format(row)]));
 
-            // Merge xxir nodes into ookla list
+            // Merge CN Ookla + xxir nodes into ookla list
             if (file.includes("ookla")) {
-                servers = { ...servers, ...XXIR_SERVERS };
+                servers = { ...servers, ...OOKLA_CN_SERVERS, ...XXIR_SERVERS };
+            }
+
+            // Merge CN LibreSpeed education nodes into librespeed list
+            if (file.includes("librespeed")) {
+                servers = { ...servers, ...LIBRE_CN_SERVERS };
             }
 
             fs.writeFileSync(file, JSON.stringify(servers, null, 4));
         })
         .catch(() => {
-            // If online fetch fails, still write xxir servers
+            // If online fetch fails, still write CN servers
             if (file.includes("ookla") && !fs.existsSync(file)) {
-                fs.writeFileSync(file, JSON.stringify(XXIR_SERVERS, null, 4));
+                fs.writeFileSync(file, JSON.stringify({ ...OOKLA_CN_SERVERS, ...XXIR_SERVERS }, null, 4));
+            }
+            if (file.includes("librespeed") && !fs.existsSync(file)) {
+                fs.writeFileSync(file, JSON.stringify(LIBRE_CN_SERVERS, null, 4));
             }
             console.error("Could not load servers from online");
         });
