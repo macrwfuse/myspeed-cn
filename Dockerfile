@@ -18,6 +18,10 @@ RUN bun install
 RUN bun run generate-migrations
 RUN bun run generate-integrations
 
+# Embed client assets into server for standalone mode
+COPY --from=client-build /client/build /myspeed/build
+RUN bun run generate-client-embed
+
 FROM oven/bun:1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \

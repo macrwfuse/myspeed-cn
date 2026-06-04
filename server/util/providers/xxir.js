@@ -737,6 +737,13 @@ export async function runXxirTest(nodeId = 'xxir-auto') {
 
     const totalTime = Math.round((performance.now() - startTime) / 1000);
 
+    // Derive the actual host from the region's ping URL
+    let host = 'speed.xxir.com';
+    try {
+        const pingUrl = regionInfo.ping || regionInfo.pingFallback || '';
+        host = new URL(pingUrl).host || host;
+    } catch {}
+
     return {
         ping: {
             latency: pingResult.latency,
@@ -753,7 +760,7 @@ export async function runXxirTest(nodeId = 'xxir-auto') {
         server: {
             id: nodeId,
             name: regionInfo.name,
-            host: 'speed.xxir.com',
+            host: host,
         },
         elapsed: totalTime,
         result: { id: null },
