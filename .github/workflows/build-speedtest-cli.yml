@@ -28,63 +28,58 @@ jobs:
         with:
           script: |
             const tag = '${{ steps.tag.outputs.tag }}';
+            const ver = tag.replace('speedtest-', '');
+            const body = [
+              '## SpeedTest CLI ' + ver,
+              '',
+              '纯 Node.js 测速命令行工具，无需外部依赖。',
+              '',
+              '### 下载',
+              '',
+              '| 平台 | 文件 |',
+              '|------|------|',
+              '| Windows x64 | speedtest-windows-x64.exe |',
+              '| Linux x64 | speedtest-linux-x64 |',
+              '| Linux arm64 | speedtest-linux-arm64 |',
+              '| macOS x64 (Intel) | speedtest-macos-x64 |',
+              '| macOS arm64 (Apple Silicon) | speedtest-macos-arm64 |',
+              '',
+              '### 使用',
+              '',
+              'Windows: speedtest-windows-x64.exe',
+              'Linux/macOS: chmod +x speedtest-linux-x64 && ./speedtest-linux-x64',
+              '',
+              '### 功能',
+              '',
+              '- 纯 Node.js，无需安装任何外部二进制',
+              '- 自动检测运营商（电信/联通/移动/云服务商）',
+              '- 根据运营商默认选择上海节点',
+              '- 多流并发下载/上传',
+              '- 终端实时进度条',
+              '- 内置 7 个 LibreSpeed 节点 + 8 个 Ookla 节点',
+              '- 自动 fallback',
+              '',
+              '### 参数',
+              '',
+              '- -s, --server <id>     指定节点 ID',
+              '- -m, --mode <mode>     测速模式: libre (默认) | ookla',
+              '- -l, --list            列出所有可用节点',
+              '- -c, --chunk <MB>      下载块大小 (默认 100MB)',
+              '- --dl-streams <n>      下载并发流 (默认 6)',
+              '- --ul-streams <n>      上传并发流 (默认 3)',
+              '- --dl-time <s>         下载测试时长 (默认 10s)',
+              '- --ul-time <s>         上传测试时长 (默认 10s)',
+            ].join('\n');
             const { data } = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tag,
-              name: `SpeedTest CLI ${tag.replace('speedtest-', '')}`,
-              body: `## SpeedTest CLI ${tag.replace('speedtest-', '')}
-
-纯 Node.js 测速命令行工具，无需外部依赖。
-
-### 下载
-
-| 平台 | 文件 |
-|------|------|
-| Windows x64 | \`speedtest-windows-x64.exe\` |
-| Linux x64 | \`speedtest-linux-x64\` |
-| Linux arm64 | \`speedtest-linux-arm64\` |
-| macOS x64 (Intel) | \`speedtest-macos-x64\` |
-| macOS arm64 (Apple Silicon) | \`speedtest-macos-arm64\` |
-
-### 使用
-
-\`\`\`bash
-# Windows
-speedtest-windows-x64.exe
-
-# Linux / macOS
-chmod +x speedtest-linux-x64
-./speedtest-linux-x64
-\`\`\`
-
-### 功能
-
-- 🚀 纯 Node.js，无需安装任何外部二进制
-- 🔍 自动检测运营商（电信/联通/移动/云服务商）
-- 📍 根据运营商默认选择上海节点
-- ⚡ 多流并发下载/上传
-- 📊 终端实时进度条
-- 🌐 内置 7 个 LibreSpeed 节点 + 8 个 Ookla 节点
-- 🔄 自动 fallback
-
-### 参数
-
-\`\`\`
--s, --server <id>     指定节点 ID
--m, --mode <mode>     测速模式: libre (默认) | ookla
--l, --list            列出所有可用节点
--c, --chunk <MB>      下载块大小 (默认 100MB)
---dl-streams <n>      下载并发流 (默认 6)
---ul-streams <n>      上传并发流 (默认 3)
---dl-time <s>         下载测试时长 (默认 10s)
---ul-time <s>         上传测试时长 (默认 10s)
--h, --help            显示帮助
-\`\`\``,
+              name: 'SpeedTest CLI ' + ver,
+              body: body,
               draft: false,
               prerelease: false
             });
-            return data;
+            return data.id;
 
   build:
     name: "${{ matrix.name }}"
@@ -132,10 +127,11 @@ chmod +x speedtest-linux-x64
         with:
           script: |
             const fs = require('fs');
+            const releaseId = ${{ needs.create-release.outputs.release_id }};
             await github.rest.repos.uploadReleaseAsset({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              release_id: ${{ needs.create-release.outputs.release_id }},
+              release_id: releaseId,
               name: '${{ matrix.output }}',
               data: fs.readFileSync('${{ matrix.output }}')
             });
