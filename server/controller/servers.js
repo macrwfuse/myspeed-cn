@@ -77,11 +77,11 @@ export const XXIR_SERVERS = {
 // 来源: spiritLHLS/speedtest.net-CN-ID
 export const OOKLA_CN_SERVERS = {
     "3633": {
-        name: "上海",
+        name: "中国电线",
         sponsor: "China Telecom",
         country: "China",
         cc: "CN",
-        distance: 0,
+        distance: 1034,
         host: "222.68.195.2:8080"
     },
     "5396": {
@@ -109,11 +109,11 @@ export const OOKLA_CN_SERVERS = {
         host: "36.156.46.53:8080"
     },
     "24447": {
-        name: "上海",
-        sponsor: "China Unicom 5G",
+        name: "中国联通",
+        sponsor: "China Unicom",
         country: "China",
         cc: "CN",
-        distance: 0,
+        distance: 1034,
         host: "210.22.155.34:8080"
     },
     "30852": {
