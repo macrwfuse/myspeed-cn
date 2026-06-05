@@ -29,8 +29,8 @@ const REGION_ENDPOINTS = {
         ping: 'https://test.ustc.edu.cn/backend/empty.php?cors=1',
         pingFallback: 'https://fs.nju.edu.cn/speed/empty.php?cors=1',
         download: [
-            'https://test.ustc.edu.cn/backend/garbage.php?cors=1&ckSize=100',
-            'https://fs.nju.edu.cn/speed/garbage.php?cors=1&ckSize=100',
+            'https://test.ustc.edu.cn/backend/garbage.php?cors=1&ckSize=500',
+            'https://fs.nju.edu.cn/speed/garbage.php?cors=1&ckSize=500',
         ],
         upload: [
             'https://test.ustc.edu.cn/backend/empty.php?cors=1',
@@ -44,8 +44,8 @@ const REGION_ENDPOINTS = {
         ping: 'https://iptv.tsinghua.edu.cn/st/empty.php?cors=1',
         pingFallback: 'https://test.ustc.edu.cn/backend/empty.php?cors=1',
         download: [
-            'https://iptv.tsinghua.edu.cn/st/garbage.php?cors=1&ckSize=100',
-            'https://test.ustc.edu.cn/backend/garbage.php?cors=1&ckSize=100',
+            'https://iptv.tsinghua.edu.cn/st/garbage.php?cors=1&ckSize=500',
+            'https://test.ustc.edu.cn/backend/garbage.php?cors=1&ckSize=500',
         ],
         upload: [
             'https://iptv.tsinghua.edu.cn/st/empty.php?cors=1',
@@ -59,8 +59,8 @@ const REGION_ENDPOINTS = {
         ping: 'https://ftp.sjtu.edu.cn/speedtest/backend/empty.php?cors=1',
         pingFallback: 'https://test.ustc.edu.cn/backend/empty.php?cors=1',
         download: [
-            'https://ftp.sjtu.edu.cn/speedtest/backend/garbage.php?cors=1&ckSize=100',
-            'https://test.ustc.edu.cn/backend/garbage.php?cors=1&ckSize=100',
+            'https://ftp.sjtu.edu.cn/speedtest/backend/garbage.php?cors=1&ckSize=500',
+            'https://test.ustc.edu.cn/backend/garbage.php?cors=1&ckSize=500',
         ],
         upload: [
             'https://ftp.sjtu.edu.cn/speedtest/backend/empty.php?cors=1',
@@ -75,8 +75,7 @@ const REGION_ENDPOINTS = {
         ping: 'https://fs.nju.edu.cn/speed/empty.php?cors=1',
         pingFallback: 'https://test.ustc.edu.cn/backend/empty.php?cors=1',
         download: [
-            'https://fs.nju.edu.cn/speed/garbage.php?cors=1&ckSize=100',
-            'https://fs.nju.edu.cn/speed/garbage.php?cors=1&ckSize=25',
+            'https://fs.nju.edu.cn/speed/garbage.php?cors=1&ckSize=500',
         ],
         upload: [
             'https://fs.nju.edu.cn/speed/empty.php?cors=1',
@@ -90,8 +89,7 @@ const REGION_ENDPOINTS = {
         ping: 'https://fs.nju.edu.cn/speed/empty.php?cors=1',
         pingFallback: 'https://test.ustc.edu.cn/backend/empty.php?cors=1',
         download: [
-            'https://fs.nju.edu.cn/speed/garbage.php?cors=1&ckSize=100',
-            'https://fs.nju.edu.cn/speed/garbage.php?cors=1&ckSize=25',
+            'https://fs.nju.edu.cn/speed/garbage.php?cors=1&ckSize=500',
         ],
         upload: [
             'https://fs.nju.edu.cn/speed/empty.php?cors=1',
