@@ -53,10 +53,10 @@ export const XXIR_SERVERS = {
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "test.nju.edu.cn",
+        host: "fs.nju.edu.cn",
         type: "xxir",
         category: "edu",
-        description: "南京大学 LibreSpeed 测速节点 (test.nju.edu.cn)"
+        description: "南京大学 LibreSpeed 测速节点 (fs.nju.edu.cn/speed/)"
     },
 
     // ── 🌍 海外 ──
@@ -199,7 +199,7 @@ export const LIBRE_CN_SERVERS = {
     "cn-edu-nju": {
         id: "cn-edu-nju",
         name: "教育网 · 南大 (LibreSpeed)",
-        server: "https://test.nju.edu.cn/backend/",
+        server: "https://fs.nju.edu.cn/speed/",
         dlURL: "garbage.php",
         ulURL: "empty.php",
         pingURL: "empty.php",

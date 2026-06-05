@@ -27,14 +27,14 @@ const REGION_ENDPOINTS = {
         name: '教育网 · 中科大',
         category: 'edu',
         ping: 'https://test.ustc.edu.cn/backend/empty.php?cors=1',
-        pingFallback: 'https://test.nju.edu.cn/backend/empty.php?cors=1',
+        pingFallback: 'https://fs.nju.edu.cn/speed/empty.php?cors=1',
         download: [
             'https://test.ustc.edu.cn/backend/garbage.php?cors=1&ckSize=100',
-            'https://test.nju.edu.cn/backend/garbage.php?cors=1&ckSize=100',
+            'https://fs.nju.edu.cn/speed/garbage.php?cors=1&ckSize=100',
         ],
         upload: [
             'https://test.ustc.edu.cn/backend/empty.php?cors=1',
-            'https://test.nju.edu.cn/backend/empty.php?cors=1',
+            'https://fs.nju.edu.cn/speed/empty.php?cors=1',
         ],
     },
 
@@ -83,18 +83,18 @@ const REGION_ENDPOINTS = {
         ],
     },
 
-    // 南京大学 · LibreSpeed 测速 (test.nju.edu.cn)
+    // 南京大学 · LibreSpeed 测速 (test.nju.edu.cn → Anubis保护, 改用fs.nju.edu.cn)
     'edu-nju-test': {
         name: '教育网 · 南大测速',
         category: 'edu',
-        ping: 'https://test.nju.edu.cn/backend/empty.php?cors=1',
-        pingFallback: 'https://fs.nju.edu.cn/speed/empty.php?cors=1',
+        ping: 'https://fs.nju.edu.cn/speed/empty.php?cors=1',
+        pingFallback: 'https://test.ustc.edu.cn/backend/empty.php?cors=1',
         download: [
-            'https://test.nju.edu.cn/backend/garbage.php?cors=1&ckSize=100',
-            'https://test.nju.edu.cn/backend/garbage.php?cors=1&ckSize=25',
+            'https://fs.nju.edu.cn/speed/garbage.php?cors=1&ckSize=100',
+            'https://fs.nju.edu.cn/speed/garbage.php?cors=1&ckSize=25',
         ],
         upload: [
-            'https://test.nju.edu.cn/backend/empty.php?cors=1',
+            'https://fs.nju.edu.cn/speed/empty.php?cors=1',
         ],
     },
 
