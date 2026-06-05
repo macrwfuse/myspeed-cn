@@ -76,29 +76,45 @@ export const XXIR_SERVERS = {
 // ── 🇨🇳 国内 Ookla Speedtest 节点 ──
 // 来源: spiritLHLS/speedtest.net-CN-ID
 export const OOKLA_CN_SERVERS = {
-    "5396": {
-        name: "苏州",
-        sponsor: "江苏电信 5G",
+    "3633": {
+        name: "上海",
+        sponsor: "China Telecom",
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "4gsuzhou1.speedtest.jsinfo.net:8080"
+        host: "222.68.195.2:8080"
+    },
+    "5396": {
+        name: "南京",
+        sponsor: "China Telecom JiangSu 5G",
+        country: "China",
+        cc: "CN",
+        distance: 0,
+        host: "115.169.22.130:8080"
+    },
+    "59386": {
+        name: "杭州",
+        sponsor: "China Telecom/浙江电信",
+        country: "China",
+        cc: "CN",
+        distance: 0,
+        host: "61.130.56.1:8080"
     },
     "16204": {
         name: "苏州",
-        sponsor: "JSQY",
+        sponsor: "China Mobile/JSQY - Suzhou",
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "speedtest.jsqiuying.com:8080"
+        host: "36.156.46.53:8080"
     },
     "24447": {
         name: "上海",
-        sponsor: "上海联通 5G",
+        sponsor: "China Unicom 5G",
         country: "China",
         cc: "CN",
         distance: 0,
-        host: "mobile.shunicomtest.com:8080"
+        host: "210.22.155.34:8080"
     },
     "30852": {
         name: "昆山",
