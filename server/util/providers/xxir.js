@@ -13,6 +13,9 @@
 import http from 'node:http';
 import https from 'node:https';
 import { URL } from 'node:url';
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // ──────────────────────────────────────────────
 // All speed test nodes
@@ -493,6 +496,122 @@ async function uploadTest(regionKey) {
 }
 
 // ──────────────────────────────────────────────
+// LibreSpeed CLI binary test for edu nodes
+// ──────────────────────────────────────────────
+
+function getLibreBinaryPath() {
+    const binName = `librespeed-cli${process.platform === 'win32' ? '.exe' : ''}`;
+    const binPath = path.join(process.cwd(), 'bin', binName);
+    return fs.existsSync(binPath) ? binPath : null;
+}
+
+function buildLibreServerConfig(regionKey) {
+    const ep = REGION_ENDPOINTS[regionKey];
+    if (!ep || ep.category !== 'edu') return null;
+
+    // Extract base URL from the first download endpoint
+    const dlUrl = ep.download[0];
+    const parsed = new URL(dlUrl);
+    const serverBase = `${parsed.protocol}//${parsed.host}${parsed.pathname.replace(/garbage\.php.*$/, '')}`;
+
+    return [{
+        id: 1,
+        name: ep.name,
+        server: serverBase,
+        dlURL: 'garbage.php',
+        ulURL: 'empty.php',
+        pingURL: 'empty.php',
+        getIpURL: 'getIP.php'
+    }];
+}
+
+async function runLibreBinaryTest(regionKey) {
+    let binaryPath = getLibreBinaryPath();
+
+    // Try to download the binary if not present
+    if (!binaryPath) {
+        try {
+            const { load } = await import('./loadLibre.js');
+            await load();
+            binaryPath = getLibreBinaryPath();
+        } catch {}
+    }
+    if (!binaryPath) return null;
+
+    const serverConfig = buildLibreServerConfig(regionKey);
+    if (!serverConfig) return null;
+
+    // Write temp server config
+    const tempDir = path.join(process.cwd(), 'data', 'servers');
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+    const tempJsonPath = path.join(tempDir, `xxir_edu_${regionKey}.json`);
+    fs.writeFileSync(tempJsonPath, JSON.stringify(serverConfig, null, 2));
+
+    const args = [
+        '--json',
+        '--duration=8',
+        '--local-json=' + tempJsonPath,
+        '--server=1'
+    ];
+
+    return new Promise((resolve) => {
+        let stdout = '';
+        let stderr = '';
+
+        const proc = spawn(binaryPath, args, { windowsHide: true });
+        proc.stdout.on('data', (buf) => { stdout += buf.toString(); });
+        proc.stderr.on('data', (buf) => { stderr += buf.toString(); });
+
+        proc.on('error', () => resolve(null));
+        proc.on('exit', () => {
+            try {
+                const lines = stdout.trim().split('\n');
+                for (const line of lines) {
+                    if (!line.startsWith('{') && !line.startsWith('[')) continue;
+                    let data = JSON.parse(line);
+                    if (Array.isArray(data)) data = data[0];
+                    if (data && (data.ping !== undefined || data.download !== undefined)) {
+                        // LibreSpeed CLI output format:
+                        // { ping, jitter, download, upload, ... }  (values in Mbps)
+                        const regionInfo = REGION_ENDPOINTS[regionKey];
+                        let host = 'unknown';
+                        try { host = new URL(regionInfo.ping).host; } catch {}
+
+                        resolve({
+                            ping: {
+                                latency: parseFloat((data.ping || 0).toFixed(2)),
+                                jitter: parseFloat((data.jitter || 0).toFixed(2)),
+                            },
+                            download: {
+                                bandwidth: Math.round((data.download || 0) * 125000), // Mbps → bytes/s * 0.8 → bandwidth
+                                elapsed: (data.download_test_duration || 8) * 1000,
+                            },
+                            upload: {
+                                bandwidth: Math.round((data.upload || 0) * 125000),
+                                elapsed: (data.upload_test_duration || 8) * 1000,
+                            },
+                            server: {
+                                id: `xxir-${regionKey}`,
+                                name: regionInfo.name,
+                                host: host,
+                            },
+                            elapsed: Math.round((data.download_test_duration || 0) + (data.upload_test_duration || 0) + (data.ping_test_duration || 0)),
+                            result: { id: null },
+                            _source: 'libre-cli'
+                        });
+                        return;
+                    }
+                }
+            } catch {}
+            resolve(null);
+        });
+
+        // Timeout safety
+        setTimeout(() => { try { proc.kill(); } catch {} }, 60000);
+    });
+}
+
+// ──────────────────────────────────────────────
 // Main entry point
 // ──────────────────────────────────────────────
 
@@ -515,18 +634,26 @@ export async function runXxirTest(nodeId = 'xxir-auto') {
 
     const regionInfo = REGION_ENDPOINTS[bestRegion];
 
-    // Ping
+    // For edu nodes: try LibreSpeed CLI binary first (more accurate)
+    if (regionInfo.category === 'edu') {
+        try {
+            const binaryResult = await runLibreBinaryTest(bestRegion);
+            if (binaryResult) {
+                console.log(`xxir: edu node ${bestRegion} tested via LibreSpeed CLI binary`);
+                return binaryResult;
+            }
+        } catch (e) {
+            console.log(`xxir: LibreSpeed CLI failed for ${bestRegion}, falling back to HTTP: ${e.message}`);
+        }
+    }
+
+    // Fallback: Node.js HTTP multi-stream test
     const pingResult = await pingTest(bestRegion);
-
-    // Download
     const dlResult = await downloadTest(bestRegion);
-
-    // Upload
     const ulResult = await uploadTest(bestRegion);
 
     const totalTime = Math.round((performance.now() - startTime) / 1000);
 
-    // Derive the actual host from the region's ping URL
     let host = 'test.ustc.edu.cn';
     try {
         const pingUrl = regionInfo.ping || regionInfo.pingFallback || '';
