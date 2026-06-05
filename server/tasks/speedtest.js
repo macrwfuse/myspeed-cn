@@ -116,6 +116,24 @@ export const create = async (type = "auto", retried = false) => {
             errorMsg = "测速组件未找到，请切换到 xxir CDN 模式测速";
         }
 
+        // Auto-fallback: if Ookla/Libre binary fails (NoServersException, ENOENT, etc.),
+        // retry with xxir mode which works natively in China without external binaries
+        if (!retried && (mode === "ookla" || mode === "libre")) {
+            console.log(`⚠️ ${mode} 模式失败 (${errorMsg})，自动降级到 xxir 模式重试...`);
+            try {
+                const xxirTest = await speedTest("xxir", "xxir-auto");
+                let {ping, jitter, download, upload, time, resultId, serverName, serverHost} = await parseData.parseData("xxir", xxirTest);
+                let testResult = await tests.create(ping, download, upload, time, xxirTest.serverId, type, resultId, null, jitter, serverName, serverHost);
+                console.log(`Test #${testResult} (xxir fallback) executed successfully in ${time}s. 🏓 ${ping} (±${jitter || 'N/A'}) ⬇ ${download}️ ⬆ ${upload}️`);
+                createRecommendations().then(() => "");
+                setRunning(false);
+                sendFinished({ping, jitter, download, upload, time}).then(() => "");
+                return;
+            } catch (xxirErr) {
+                console.log("xxir fallback also failed:", xxirErr);
+            }
+        }
+
         if (!retried) return create(type, true);
         let testResult = await tests.create(-1, -1, -1, null, 0, type, null, errorMsg);
         await sendError(errorMsg);
