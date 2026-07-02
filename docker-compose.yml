@@ -1,4 +1,4 @@
-# MySpeed-CN Docker Compose (with xxir CDN speed test support)
+# MySpeed-CN Docker Compose
 # Usage: docker compose up -d
 
 version: '3.8'

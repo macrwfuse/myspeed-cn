@@ -8,6 +8,7 @@
 - 🖥️ Windows x64 独立可执行文件，无需安装依赖
 - 🔧 移除原生模块依赖，避免 Windows 编译问题
 - 📊 支持 Ookla Speedtest / LibreSpeed / Cloudflare 三种测速模式
+- 🐳 Docker 镜像内置测速工具二进制文件，开箱即用
 
 ## 📥 下载
 
@@ -51,16 +52,6 @@ curl -fsSL https://raw.githubusercontent.com/macrwfuse/myspeed-cn/main/scripts/d
 | 73010 | 贺兰 | Arslan Telecom | arslantel.online |
 
 节点来源: [spiritLHLS/speedtest.net-CN-ID](https://github.com/spiritLHLS/speedtest.net-CN-ID)
-
-### xxir 自定义教育网节点
-
-| 节点 ID | 名称 | 服务器地址 | 说明 |
-|---|---|---|---|
-| edu-ustc | 教育网 · 中科大 | test.ustc.edu.cn | 中国科学技术大学 |
-| edu-tsinghua | 教育网 · 清华 | iptv.tsinghua.edu.cn | 清华大学 |
-| edu-sjtu | 教育网 · 上交 | ftp.sjtu.edu.cn | 上海交通大学 |
-| edu-nju-fs | 教育网 · 南大文件服务 | fs.nju.edu.cn | 南京大学文件服务测速 |
-| edu-nju-test | 教育网 · 南大测速 | test.nju.edu.cn | 南京大学 LibreSpeed 测速 |
 
 ## 🔨 从源码编译
 
@@ -205,12 +196,12 @@ Bun 的 `--compile` 功能在交叉编译时有以下限制：
 
 ### 4. 测速二进制文件
 
-MySpeed 会在首次运行时自动下载测速工具：
-- **Ookla Speedtest CLI**: 从 speedtest.net 下载
-- **LibreSpeed CLI**: 从 GitHub 下载
-- **Cloudflare Speedtest**: 从 GitHub 下载
+Docker 镜像已内置测速工具，开箱即用：
+- **Ookla Speedtest CLI**: v1.2.0
+- **LibreSpeed CLI**: v1.0.10
+- **Cloudflare Speedtest**: v2.2.2
 
-这些二进制文件保存在 `bin/` 目录。
+非 Docker 部署需手动下载测速工具并放入 `bin/` 目录。
 
 ### 5. 网络问题
 
@@ -243,7 +234,7 @@ myspeed-cn/
 ├── scripts/               # 构建脚本
 │   ├── merge-cn-nodes.js  # CN 节点合并脚本 (新增)
 │   └── docker-install.sh  # Docker 一键安装脚本
-├── Dockerfile             # Docker 构建文件
+├── Dockerfile             # Docker 构建文件 (内置测速工具)
 ├── docker-compose.yml     # Docker Compose 配置
 ├── dist/                  # 编译产物
 │   └── MySpeed.exe        # Windows 可执行文件
@@ -344,6 +335,7 @@ docker run -d \
 | 项目 | 原版 MySpeed | MySpeed-CN |
 |---|---|---|
 | 中国测速节点 | ❌ 需手动添加 | ✅ 内置 11 个 |
+| Docker 测速工具 | 运行时下载 | ✅ 镜像内置 |
 | @resvg/resvg-js | ✅ 必需 | ❌ 已移除 |
 | OG 图片格式 | PNG | SVG |
 | Windows 编译 | 需处理原生模块 | ✅ 直接编译 |

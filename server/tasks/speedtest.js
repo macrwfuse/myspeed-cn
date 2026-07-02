@@ -42,7 +42,7 @@ export const run = async (retryAuto = false) => {
         throw {message: "No provider selected"};
     }
 
-    let serverId = mode === "cloudflare" ? 0 : (mode === "xxir" ? (await config.getValue("xxirId") || "xxir-auto") : await config.getValue(mode + "Id"));
+    let serverId = mode === "cloudflare" ? 0 : await config.getValue(mode + "Id");
     let serverUrl = mode === "libre" ? await config.getValue("libreUrl") : undefined;
 
     if (serverId === "none")
@@ -113,25 +113,13 @@ export const create = async (type = "auto", retried = false) => {
 
         // Friendly message for missing binary
         if (errorMsg.includes('ENOENT') && errorMsg.includes('speedtest')) {
-            errorMsg = "测速组件未找到，请切换到 xxir CDN 模式测速";
+            errorMsg = "测速组件未找到，请确认 bin 目录中包含对应组件";
         }
 
         // Auto-fallback: if Ookla/Libre binary fails (NoServersException, ENOENT, etc.),
-        // retry with xxir mode which works natively in China without external binaries
+        // retry once
         if (!retried && (mode === "ookla" || mode === "libre")) {
-            console.log(`⚠️ ${mode} 模式失败 (${errorMsg})，自动降级到 xxir 模式重试...`);
-            try {
-                const xxirTest = await speedTest("xxir", "xxir-auto");
-                let {ping, jitter, download, upload, time, resultId, serverName, serverHost} = await parseData.parseData("xxir", xxirTest);
-                let testResult = await tests.create(ping, download, upload, time, xxirTest.serverId, type, resultId, null, jitter, serverName, serverHost);
-                console.log(`Test #${testResult} (xxir fallback) executed successfully in ${time}s. 🏓 ${ping} (±${jitter || 'N/A'}) ⬇ ${download}️ ⬆ ${upload}️`);
-                createRecommendations().then(() => "");
-                setRunning(false);
-                sendFinished({ping, jitter, download, upload, time}).then(() => "");
-                return;
-            } catch (xxirErr) {
-                console.log("xxir fallback also failed:", xxirErr);
-            }
+            console.log(`⚠️ ${mode} 模式失败 (${errorMsg})，自动重试...`);
         }
 
         if (!retried) return create(type, true);

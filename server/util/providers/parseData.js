@@ -53,17 +53,7 @@ export const parseCloudflare = (test) => {
         serverName: null, serverHost: null};
 };
 
-export const parseXxir = (test) => {
-    let ping = Math.round(test.ping.latency);
-    let jitter = test.ping.jitter ? parseFloat(test.ping.jitter.toFixed(2)) : null;
-    let download = roundSpeed(test.download.bandwidth);
-    let upload = roundSpeed(test.upload.bandwidth);
-    let time = Math.round((test.download.elapsed + test.upload.elapsed) / 1000);
-    let serverName = test.server?.name ?? null;
-    let serverHost = test.server?.host ?? null;
 
-    return {ping, jitter, download, upload, time, resultId: null, serverName, serverHost};
-};
 
 export const parseData = (provider, data) => {
     switch (provider) {
@@ -73,8 +63,6 @@ export const parseData = (provider, data) => {
             return parseLibre(data);
         case "cloudflare":
             return parseCloudflare(data);
-        case "xxir":
-            return parseXxir(data);
         default:
             throw {message: "Invalid provider"};
     }

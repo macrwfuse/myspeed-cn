@@ -22,7 +22,6 @@ const configDefaults = {
     ooklaId: "none",
     libreId: "none",
     libreUrl: "none",
-    xxirId: "none",
     password: "none",
     passwordLevel: "none",
     interface: "none",
@@ -106,7 +105,7 @@ export const validateInput = async (key, value) => {
     if (key === "passwordLevel" && !["none", "read"].includes(value))
         return "You need to provide either none or read-access";
 
-    if (key === "provider" && !["ookla", "libre", "cloudflare", "xxir"].includes(value))
+    if (key === "provider" && !["ookla", "libre", "cloudflare"].includes(value))
         return "You need to provide a valid provider";
 
     if (key === "ping")

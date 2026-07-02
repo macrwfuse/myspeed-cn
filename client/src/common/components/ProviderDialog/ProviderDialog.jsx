@@ -7,7 +7,6 @@ import React, {useContext, useEffect, useState} from "react";
 import OoklaImage from "./assets/img/ookla.webp";
 import LibreImage from "./assets/img/libre.webp";
 import CloudflareImage from "./assets/img/cloudflare.webp";
-import XxirImage from "./assets/img/xxir.webp";
 import {jsonRequest, patchRequest} from "@/common/utils/RequestUtil";
 import {Trans} from "react-i18next";
 import {ConfigContext} from "@/common/contexts/Config";
@@ -17,8 +16,7 @@ import SelectableOption, {SelectableList} from "@/common/components/SelectableOp
 export const providers = [
     {id: "ookla", name: "Ookla", image: OoklaImage},
     {id: "libre", name: "LibreSpeed", image: LibreImage},
-    {id: "cloudflare", name: "Cloudflare", image: CloudflareImage},
-    {id: "xxir", name: "XXIR CDN", image: XxirImage}
+    {id: "cloudflare", name: "Cloudflare", image: CloudflareImage}
 ];
 
 export const ProviderDialog = ({open, onClose}) => {
@@ -29,7 +27,6 @@ export const ProviderDialog = ({open, onClose}) => {
     const [currentInterface, setCurrentInterface] = useState(config.interface || "none");
     const [ooklaServers, setOoklaServers] = useState({});
     const [libreServers, setLibreServers] = useState({});
-    const [xxirServers, setXxirServers] = useState({});
     const [serverId, setServerId] = useState("none");
     const [libreUrl, setLibreUrl] = useState(config.libreUrl || "none");
     const [acceptedOokla, setAcceptedOokla] = useState(config.provider === "ookla");
@@ -38,7 +35,6 @@ export const ProviderDialog = ({open, onClose}) => {
         if (!open) return;
         jsonRequest("/info/server/ookla").then(setOoklaServers);
         jsonRequest("/info/server/libre").then(setLibreServers);
-        jsonRequest("/info/server/xxir").then(setXxirServers);
         jsonRequest("/info/interfaces").then(setInterfaces);
     }, [open]);
 
@@ -146,9 +142,6 @@ export const ProviderDialog = ({open, onClose}) => {
                                             ))}
                                             {provider === "libre" && Object.keys(libreServers).map((current, index) => (
                                                 <option key={index} value={current}>{formatServerLabel(libreServers[current])}</option>
-                                            ))}
-                                            {provider === "xxir" && Object.keys(xxirServers).map((current, index) => (
-                                                <option key={index} value={current}>{formatServerLabel(xxirServers[current])}</option>
                                             ))}
                                         </select>
                                     </div>

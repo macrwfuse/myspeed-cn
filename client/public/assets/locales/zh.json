@@ -38,8 +38,7 @@
       "server": "服务器",
       "server_id": "服务器ID",
       "choose_automatically": "自动选择",
-      "ookla_license": "我已阅读并接受 Ookla 的<Eula>最终用户许可协议</Eula>、<GDPR>隐私政策</GDPR>和<TOS>服务条款</TOS>。",
-      "xxir_desc": "教育网高校节点测速"
+      "ookla_license": "我已阅读并接受 Ookla 的<Eula>最终用户许可协议</Eula>、<GDPR>隐私政策</GDPR>和<TOS>服务条款</TOS>。"
     }
   },
   "dropdown": {

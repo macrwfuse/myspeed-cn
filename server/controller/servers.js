@@ -1,78 +1,5 @@
 import fs from 'node:fs';
 
-// xxir-based speed test nodes (university + global, CDN/ISP nodes removed)
-export const XXIR_SERVERS = {
-    // ── 🎓 教育网 ──
-    "edu-ustc": {
-        name: "教育网 · 中科大",
-        sponsor: "中国科学技术大学",
-        country: "China",
-        cc: "CN",
-        distance: 0,
-        host: "test.ustc.edu.cn",
-        type: "xxir",
-        category: "edu",
-        description: "中国科学技术大学测速节点"
-    },
-    "edu-tsinghua": {
-        name: "教育网 · 清华",
-        sponsor: "清华大学",
-        country: "China",
-        cc: "CN",
-        distance: 0,
-        host: "iptv.tsinghua.edu.cn",
-        type: "xxir",
-        category: "edu",
-        description: "清华大学测速节点"
-    },
-    "edu-sjtu": {
-        name: "教育网 · 上交",
-        sponsor: "上海交通大学",
-        country: "China",
-        cc: "CN",
-        distance: 0,
-        host: "ftp.sjtu.edu.cn",
-        type: "xxir",
-        category: "edu",
-        description: "上海交通大学测速节点"
-    },
-    "edu-nju-fs": {
-        name: "教育网 · 南大文件服务",
-        sponsor: "南京大学",
-        country: "China",
-        cc: "CN",
-        distance: 0,
-        host: "fs.nju.edu.cn",
-        type: "xxir",
-        category: "edu",
-        description: "南京大学文件服务测速节点 (fs.nju.edu.cn)"
-    },
-    "edu-nju-test": {
-        name: "教育网 · 南大测速",
-        sponsor: "南京大学",
-        country: "China",
-        cc: "CN",
-        distance: 0,
-        host: "fs.nju.edu.cn",
-        type: "xxir",
-        category: "edu",
-        description: "南京大学 LibreSpeed 测速节点 (fs.nju.edu.cn/speed/)"
-    },
-
-    // ── 🌍 海外 ──
-    "cloudflare": {
-        name: "CloudFlare · 全球CDN",
-        sponsor: "CloudFlare",
-        country: "Global",
-        cc: "US",
-        distance: 0,
-        host: "speed.cloudflare.com",
-        type: "xxir",
-        category: "global",
-        description: "CloudFlare 全球CDN测速节点"
-    },
-};
-
 // ── 🇨🇳 国内 Ookla Speedtest 节点 ──
 // 来源: spiritLHLS/speedtest.net-CN-ID
 export const OOKLA_CN_SERVERS = {
@@ -263,8 +190,8 @@ export const getOoklaServers = () => {
         } catch { }
     }
 
-    // Merge CN Ookla nodes + xxir nodes (xxir takes priority)
-    ooklaServers = { ...servers, ...OOKLA_CN_SERVERS, ...XXIR_SERVERS };
+    // Merge CN Ookla nodes
+    ooklaServers = { ...servers, ...OOKLA_CN_SERVERS };
 
     return ooklaServers;
 }
@@ -272,5 +199,4 @@ export const getOoklaServers = () => {
 export const getByMode = (mode) => {
     if (mode === "ookla") return getOoklaServers();
     if (mode === "libre") return getLibreServers();
-    if (mode === "xxir") return XXIR_SERVERS;
 }

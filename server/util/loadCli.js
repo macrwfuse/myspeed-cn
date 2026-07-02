@@ -3,14 +3,19 @@ import * as ooklaProvider from './providers/loadOokla.js';
 import * as cloudflareProvider from './providers/loadCloudflare.js';
 
 export const load = async () => {
-    // Download binaries in background — don't block server startup
-    // This prevents slow/blocked CDN downloads (especially in China) from
-    // preventing the web UI from loading.
-    const downloadAll = async () => {
-        try { await libreProvider.load(); } catch (e) { console.warn("LibreSpeed binary download skipped:", e.message); }
-        try { await ooklaProvider.load(); } catch (e) { console.warn("Ookla binary download skipped:", e.message); }
-        try { await cloudflareProvider.load(); } catch (e) { console.warn("Cloudflare binary download skipped:", e.message); }
-        console.log("CLI binaries ready.");
-    };
-    downloadAll(); // fire-and-forget
+    // Binaries are pre-installed in the Docker image.
+    // For non-Docker deployments, ensure bin/ directory contains the CLI binaries.
+    const checks = [
+        { name: 'LibreSpeed', provider: libreProvider },
+        { name: 'Ookla', provider: ooklaProvider },
+        { name: 'Cloudflare', provider: cloudflareProvider },
+    ];
+
+    for (const { name, provider } of checks) {
+        if (await provider.fileExists()) {
+            console.log(`${name} binary ready.`);
+        } else {
+            console.warn(`${name} binary not found in bin/. Speed tests using ${name} will not work.`);
+        }
+    }
 };
