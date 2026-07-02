@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build-windows:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -20,13 +20,16 @@ jobs:
           bun-version: latest
 
       - name: Install client dependencies
-        run: cd client && bun install
+        working-directory: client
+        run: bun install
 
       - name: Build client
-        run: cd client && bun run build
+        working-directory: client
+        run: bun run build
 
       - name: Move build folder
-        run: mv client/build . || true
+        shell: pwsh
+        run: Move-Item -Path client/build -Destination .
 
       - name: Install server dependencies
         run: bun install
@@ -39,22 +42,64 @@ jobs:
 
       - name: Build Windows x64 executable
         run: |
-          bun build --compile \
-            --compile-autoload-package-json \
-            --external pg-hstore \
-            --external pg \
-            --target=bun-windows-x64 \
-            server/index.js \
-            --outfile MySpeed-CN.exe
+          bun build --compile --compile-autoload-package-json --external pg-hstore --external pg --target=bun-windows-x64 server/index.js --outfile MySpeed-CN.exe
 
-      - name: Upload Windows artifact
+      - name: Download speedtest binaries
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path bin
+
+          # Ookla Speedtest CLI v1.2.0
+          Invoke-WebRequest -Uri "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-win64.zip" -OutFile ookla.zip
+          Expand-Archive -Path ookla.zip -DestinationPath bin -Force
+          Remove-Item ookla.zip
+
+          # LibreSpeed CLI v1.0.10
+          Invoke-WebRequest -Uri "https://github.com/librespeed/speedtest-cli/releases/download/v1.0.10/librespeed-cli_1.0.10_windows_amd64.zip" -OutFile libre.zip
+          Expand-Archive -Path libre.zip -DestinationPath bin -Force
+          Remove-Item libre.zip
+
+          # Cloudflare cfspeedtest v2.2.2
+          Invoke-WebRequest -Uri "https://github.com/code-inflation/cfspeedtest/releases/download/v2.2.2/cfspeedtest-x86_64-pc-windows-msvc.zip" -OutFile cf.zip
+          Expand-Archive -Path cf.zip -DestinationPath bin -Force
+          Remove-Item cf.zip
+
+      - name: Create release archive
+        shell: pwsh
+        run: Compress-Archive -Path MySpeed-CN.exe, bin -DestinationPath MySpeed-CN-windows-x64.zip
+
+      - name: Upload Windows executable
         uses: actions/upload-artifact@v4
         with:
-          name: MySpeed-CN-Windows-x64
+          name: MySpeed-CN-Windows-x64-exe
           path: MySpeed-CN.exe
 
+      - name: Upload Windows archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: MySpeed-CN-Windows-x64-zip
+          path: MySpeed-CN-windows-x64.zip
+
   build-linux:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            target: bun-linux-x64
+            runner: ubuntu-latest
+            artifact_name: MySpeed-CN-linux-x64
+            ookla_suffix: linux-x86_64.tgz
+            libre_suffix: linux_amd64.tar.gz
+            cf_suffix: x86_64-unknown-linux-gnu.tar.gz
+          - arch: arm64
+            target: bun-linux-arm64
+            runner: ubuntu-24.04-arm
+            artifact_name: MySpeed-CN-linux-arm64
+            ookla_suffix: linux-aarch64.tgz
+            libre_suffix: linux_arm64.tar.gz
+            cf_suffix: aarch64-unknown-linux-gnu.tar.gz
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
 
@@ -63,13 +108,15 @@ jobs:
           bun-version: latest
 
       - name: Install client dependencies
-        run: cd client && bun install
+        working-directory: client
+        run: bun install
 
       - name: Build client
-        run: cd client && bun run build
+        working-directory: client
+        run: bun run build
 
       - name: Move build folder
-        run: mv client/build . || true
+        run: mv client/build .
 
       - name: Install server dependencies
         run: bun install
@@ -80,23 +127,58 @@ jobs:
           bun run generate-integrations
           bun run generate-client-embed
 
-      - name: Build Linux x64 executable
-        run: |
-          bun build --compile \
-            --compile-autoload-package-json \
-            --external pg-hstore \
-            --external pg \
-            --target=bun-linux-x64 \
-            server/index.js \
-            --outfile MySpeed-CN
+      - name: Build Linux executable
+        run: bun build --compile --compile-autoload-package-json --external pg-hstore --external pg --target=${{ matrix.target }} server/index.js --outfile MySpeed-CN
 
-      - name: Upload Linux artifact
+      - name: Download speedtest binaries
+        run: |
+          mkdir -p bin
+
+          curl -fsSL "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-${{ matrix.ookla_suffix }}" -o /tmp/ookla.tgz
+          tar -xzf /tmp/ookla.tgz -C bin speedtest
+          chmod +x bin/speedtest
+          rm /tmp/ookla.tgz
+
+          curl -fsSL "https://github.com/librespeed/speedtest-cli/releases/download/v1.0.10/librespeed-cli_1.0.10_${{ matrix.libre_suffix }}" -o /tmp/libre.tar.gz
+          tar -xzf /tmp/libre.tar.gz -C bin librespeed-cli
+          chmod +x bin/librespeed-cli
+          rm /tmp/libre.tar.gz
+
+          curl -fsSL "https://github.com/code-inflation/cfspeedtest/releases/download/v2.2.2/cfspeedtest-${{ matrix.cf_suffix }}" -o /tmp/cf.tar.gz
+          tar -xzf /tmp/cf.tar.gz -C bin cfspeedtest
+          chmod +x bin/cfspeedtest
+          rm /tmp/cf.tar.gz
+
+          ls -la bin/
+
+      - name: Create release archive
+        run: tar -czf ${{ matrix.artifact_name }}.tar.gz MySpeed-CN bin/
+
+      - name: Upload standalone
         uses: actions/upload-artifact@v4
         with:
-          name: MySpeed-CN-Linux-x64
+          name: ${{ matrix.artifact_name }}-exe
           path: MySpeed-CN
 
+      - name: Upload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}-tar
+          path: ${{ matrix.artifact_name }}.tar.gz
+
   build-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            target: bun-darwin-x64
+            artifact_name: MySpeed-CN-macos-x64
+            libre_suffix: darwin_amd64.tar.gz
+          - arch: arm64
+            target: bun-darwin-arm64
+            artifact_name: MySpeed-CN-macos-arm64
+            libre_suffix: darwin_arm64.tar.gz
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -106,13 +188,15 @@ jobs:
           bun-version: latest
 
       - name: Install client dependencies
-        run: cd client && bun install
+        working-directory: client
+        run: bun install
 
       - name: Build client
-        run: cd client && bun run build
+        working-directory: client
+        run: bun run build
 
       - name: Move build folder
-        run: mv client/build . || true
+        run: mv client/build .
 
       - name: Install server dependencies
         run: bun install
@@ -123,37 +207,46 @@ jobs:
           bun run generate-integrations
           bun run generate-client-embed
 
-      - name: Build macOS arm64 executable
-        run: |
-          bun build --compile \
-            --compile-autoload-package-json \
-            --external pg-hstore \
-            --external pg \
-            --target=bun-darwin-arm64 \
-            server/index.js \
-            --outfile MySpeed-CN-macos-arm64
+      - name: Build macOS executable
+        run: bun build --compile --compile-autoload-package-json --external pg-hstore --external pg --target=${{ matrix.target }} server/index.js --outfile MySpeed-CN
 
-      - name: Build macOS x64 executable
+      - name: Download speedtest binaries
         run: |
-          bun build --compile \
-            --compile-autoload-package-json \
-            --external pg-hstore \
-            --external pg \
-            --target=bun-darwin-x64 \
-            server/index.js \
-            --outfile MySpeed-CN-macos-x64
+          mkdir -p bin
 
-      - name: Upload macOS arm64 artifact
+          # Ookla (macOS x86_64, works on arm64 via Rosetta)
+          curl -fsSL "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-macosx-x86_64.tgz" -o /tmp/ookla.tgz
+          tar -xzf /tmp/ookla.tgz -C bin speedtest
+          chmod +x bin/speedtest
+          rm /tmp/ookla.tgz
+
+          curl -fsSL "https://github.com/librespeed/speedtest-cli/releases/download/v1.0.10/librespeed-cli_1.0.10_${{ matrix.libre_suffix }}" -o /tmp/libre.tar.gz
+          tar -xzf /tmp/libre.tar.gz -C bin librespeed-cli
+          chmod +x bin/librespeed-cli
+          rm /tmp/libre.tar.gz
+
+          # Cloudflare universal binary
+          curl -fsSL "https://github.com/code-inflation/cfspeedtest/releases/download/v2.2.2/cfspeedtest-universal-apple-darwin.tar.gz" -o /tmp/cf.tar.gz
+          tar -xzf /tmp/cf.tar.gz -C bin cfspeedtest
+          chmod +x bin/cfspeedtest
+          rm /tmp/cf.tar.gz
+
+          ls -la bin/
+
+      - name: Create release archive
+        run: tar -czf ${{ matrix.artifact_name }}.tar.gz MySpeed-CN bin/
+
+      - name: Upload standalone
         uses: actions/upload-artifact@v4
         with:
-          name: MySpeed-CN-macOS-arm64
-          path: MySpeed-CN-macos-arm64
+          name: ${{ matrix.artifact_name }}-exe
+          path: MySpeed-CN
 
-      - name: Upload macOS x64 artifact
+      - name: Upload archive
         uses: actions/upload-artifact@v4
         with:
-          name: MySpeed-CN-macOS-x64
-          path: MySpeed-CN-macos-x64
+          name: ${{ matrix.artifact_name }}-tar
+          path: ${{ matrix.artifact_name }}.tar.gz
 
   release:
     needs: [build-windows, build-linux, build-macos]
@@ -162,36 +255,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download Windows artifact
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          name: MySpeed-CN-Windows-x64
           path: dist/
 
-      - name: Download Linux artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: MySpeed-CN-Linux-x64
-          path: dist/
-
-      - name: Download macOS arm64 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: MySpeed-CN-macOS-arm64
-          path: dist/
-
-      - name: Download macOS x64 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: MySpeed-CN-macOS-x64
-          path: dist/
+      - name: List all artifacts
+        run: find dist/ -type f | sort
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/MySpeed-CN.exe
-            dist/MySpeed-CN
-            dist/MySpeed-CN-macos-arm64
-            dist/MySpeed-CN-macos-x64
+            dist/MySpeed-CN-Windows-x64-exe/MySpeed-CN.exe
+            dist/MySpeed-CN-Windows-x64-zip/MySpeed-CN-windows-x64.zip
+            dist/MySpeed-CN-linux-x64-exe/MySpeed-CN
+            dist/MySpeed-CN-linux-x64-tar/MySpeed-CN-linux-x64.tar.gz
+            dist/MySpeed-CN-linux-arm64-exe/MySpeed-CN
+            dist/MySpeed-CN-linux-arm64-tar/MySpeed-CN-linux-arm64.tar.gz
+            dist/MySpeed-CN-macos-x64-exe/MySpeed-CN
+            dist/MySpeed-CN-macos-x64-tar/MySpeed-CN-macos-x64.tar.gz
+            dist/MySpeed-CN-macos-arm64-exe/MySpeed-CN
+            dist/MySpeed-CN-macos-arm64-tar/MySpeed-CN-macos-arm64.tar.gz
           generate_release_notes: true
