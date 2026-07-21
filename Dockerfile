@@ -1,4 +1,4 @@
-FROM oven/bun:1 AS client-build
+FROM node:20-slim AS client-build
 
 WORKDIR /client
 COPY ./client/package.json ./
