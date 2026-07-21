@@ -1,14 +1,42 @@
-FROM node:20-slim AS client-build
+
+FROM docker.1ms.run/node:20-slim AS client-build
 
 WORKDIR /client
-COPY ./client/package.json ./
-RUN bun install
-COPY ./client ./
-RUN bun run build
+RUN set -eux; \
+    if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+      sed -i \
+        -e 's|deb.debian.org|mirrors.aliyun.com|g' \
+        -e 's|security.debian.org|mirrors.aliyun.com/debian-security|g' \
+        /etc/apt/sources.list.d/debian.sources; \
+    else \
+      sed -i \
+        -e 's|deb.debian.org|mirrors.aliyun.com|g' \
+        -e 's|security.debian.org|mirrors.aliyun.com/debian-security|g' \
+        /etc/apt/sources.list; \
+    fi
 
-FROM oven/bun:1 AS server-build
+COPY ./client/package.json ./
+RUN npm install
+COPY ./client ./
+RUN npm run build
+
+FROM  docker.1ms.run/oven/bun:1 AS server-build
+
 
 WORKDIR /myspeed
+
+RUN set -eux; \
+    if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+      sed -i \
+        -e 's|deb.debian.org|mirrors.aliyun.com|g' \
+        -e 's|security.debian.org|mirrors.aliyun.com/debian-security|g' \
+        /etc/apt/sources.list.d/debian.sources; \
+    else \
+      sed -i \
+        -e 's|deb.debian.org|mirrors.aliyun.com|g' \
+        -e 's|security.debian.org|mirrors.aliyun.com/debian-security|g' \
+        /etc/apt/sources.list; \
+    fi
 
 COPY ./server /myspeed/server
 COPY ./scripts /myspeed/scripts
@@ -23,7 +51,20 @@ COPY --from=client-build /client/build /myspeed/build
 RUN bun run generate-client-embed
 
 # Download speed test CLI binaries for Linux x86_64
-FROM debian:bookworm-slim AS binaries
+FROM  docker.1ms.run/debian:bookworm-slim AS binaries
+
+RUN set -eux; \
+    if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+      sed -i \
+        -e 's|deb.debian.org|mirrors.aliyun.com|g' \
+        -e 's|security.debian.org|mirrors.aliyun.com/debian-security|g' \
+        /etc/apt/sources.list.d/debian.sources; \
+    else \
+      sed -i \
+        -e 's|deb.debian.org|mirrors.aliyun.com|g' \
+        -e 's|security.debian.org|mirrors.aliyun.com/debian-security|g' \
+        /etc/apt/sources.list; \
+    fi
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates tar gzip unzip && \
@@ -38,18 +79,18 @@ RUN curl -fsSL "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linu
     rm /tmp/ookla.tgz
 
 # LibreSpeed CLI v1.0.10
-RUN curl -fsSL "https://github.com/librespeed/speedtest-cli/releases/download/v1.0.10/librespeed-cli_1.0.10_linux_amd64.tar.gz" -o /tmp/libre.tar.gz && \
+RUN curl -fsSL "https://gh.xxooo.cf/https://github.com/librespeed/speedtest-cli/releases/download/v1.0.10/librespeed-cli_1.0.10_linux_amd64.tar.gz" -o /tmp/libre.tar.gz && \
     tar -xzf /tmp/libre.tar.gz -C /bins librespeed-cli && \
     chmod +x /bins/librespeed-cli && \
     rm /tmp/libre.tar.gz
 
 # Cloudflare cfspeedtest v2.2.2
-RUN curl -fsSL "https://github.com/code-inflation/cfspeedtest/releases/download/v2.2.2/cfspeedtest-x86_64-unknown-linux-gnu.tar.gz" -o /tmp/cf.tar.gz && \
+RUN curl -fsSL "https://gh.xxooo.cf/https://github.com/code-inflation/cfspeedtest/releases/download/v2.2.2/cfspeedtest-x86_64-unknown-linux-gnu.tar.gz" -o /tmp/cf.tar.gz && \
     tar -xzf /tmp/cf.tar.gz -C /bins cfspeedtest && \
     chmod +x /bins/cfspeedtest && \
     rm /tmp/cf.tar.gz
 
-FROM oven/bun:1
+FROM  docker.1ms.run/oven/bun:1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tzdata ca-certificates openssl curl \
