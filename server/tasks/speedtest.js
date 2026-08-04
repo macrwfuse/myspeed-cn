@@ -47,6 +47,9 @@ export const run = async (retryAuto = false) => {
 
     if (serverId === "none")
         serverId = undefined;
+
+    // 未指定节点时默认使用上海电信 (3633)
+    if (serverId === undefined && mode === "ookla") serverId = "3633";
     
     if (serverUrl === "none")
         serverUrl = undefined;

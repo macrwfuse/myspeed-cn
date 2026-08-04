@@ -18,7 +18,7 @@ const configDefaults = {
     upload: "50",
     cron: "0 * * * *",
     scheduleOffset: "true",
-    provider: "none",
+    provider: "ookla",
     ooklaId: "none",
     libreId: "none",
     libreUrl: "none",
