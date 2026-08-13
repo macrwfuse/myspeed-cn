@@ -3,22 +3,15 @@ import * as interfacesModule from '../util/loadInterfaces.js';
 import * as config from '../controller/config.js';
 import fs from 'node:fs';
 import path from 'node:path';
-import { runXxirTest } from './providers/xxir.js';
 
 export default async (mode, serverId, serverUrl) => {
-    // xxir mode: native Node.js multi-stream HTTP test, no CLI binary needed
-    if (mode === "xxir") {
-        const nodeId = serverId || "xxir-auto";
-        return await runXxirTest(nodeId);
-    }
-
     const binaryPath = mode === "ookla" ? './bin/speedtest' + (process.platform === "win32" ? ".exe" : "")
         : mode === "libre" ? './bin/librespeed-cli' + (process.platform === "win32" ? ".exe" : "")
             : './bin/cfspeedtest' + (process.platform === "win32" ? ".exe" : "");
 
     // Check if binary exists before trying to spawn
     if (!fs.existsSync(binaryPath)) {
-        throw new Error(`测速组件 ${binaryPath} 不存在，请切换到 xxir CDN 模式或安装对应组件`);
+        throw new Error(`测速组件 ${binaryPath} 不存在，请确认 bin 目录中包含对应组件`);
     }
 
     if (!interfacesModule.interfaces) throw new Error("No interfaces found");
