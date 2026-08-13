@@ -23,7 +23,7 @@ export default async (mode, serverId, serverUrl) => {
     let args;
 
     if (mode === "ookla") {
-        args = ['--accept-license', '--accept-gdpr', '--format=json'];
+        args = ['--accept-license', '--accept-gdpr', '--format=json', '--ipv4'];
 
         if (process.platform === "win32") {
             args.push('--ip=' + interfaceIp);
@@ -67,10 +67,16 @@ export default async (mode, serverId, serverUrl) => {
     const testProcess = spawn(binaryPath, args, {windowsHide: true});
 
     testProcess.stderr.on('data', (buffer) => {
-        result.error = buffer.toString();
-        if (buffer.toString().includes("Too many requests")) {
+        const msg = buffer.toString();
+        if (msg.includes("Too many requests")) {
             result.error = "Too many requests. Please try again later";
+        } else if (msg.includes("Cannot resolve host")
+                   || msg.includes("Cannot connect")
+                   || msg.includes("No servers defined")
+                   || msg.includes("Configuration")) {
+            result.error = msg;
         }
+        // [101] Network unreachable, [0] Cannot read from socket 等非致命 stderr 输出直接忽略
     });
 
     testProcess.stdout.on('data', (buffer) => {
@@ -106,6 +112,10 @@ export default async (mode, serverId, serverUrl) => {
         });
     });
 
-    if (result.error) throw new Error(result.error);
+    // 如果 stdout 解析出了有效结果，即使有 stderr 警告也不抛异常
+    if (result.error && !result.download && !result.ping && !result.upload) {
+        throw new Error(result.error);
+    }
+
     return {...result, elapsed: new Date().getTime() - startTime};
-}
+};
