@@ -132,6 +132,15 @@ export const LIBRE_CN_SERVERS = {
         pingURL: "empty.php",
         getIpURL: "getIP.php"
     },
+    "cn-edu-zju": {
+        id: "cn-edu-zju",
+        name: "教育网 · 浙大 (LibreSpeed)",
+        server: "http://speedtest.zju.edu.cn",
+        dlURL: "garbage.php",
+        ulURL: "empty.php",
+        pingURL: "empty.php",
+        getIpURL: "getIP.php"
+    },
     "cn-edu-whut": {
         id: "cn-edu-whut",
         name: "教育网 · 武汉理工 (LibreSpeed)",
