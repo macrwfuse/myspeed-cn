@@ -3,15 +3,22 @@ import * as interfacesModule from '../util/loadInterfaces.js';
 import * as config from '../controller/config.js';
 import fs from 'node:fs';
 import path from 'node:path';
+import { runXxirTest } from './providers/xxir.js';
 
 export default async (mode, serverId, serverUrl) => {
+    // xxir mode: native Node.js multi-stream HTTP test, no CLI binary needed
+    if (mode === "xxir") {
+        const nodeId = serverId || "xxir-auto";
+        return await runXxirTest(nodeId);
+    }
+
     const binaryPath = mode === "ookla" ? './bin/speedtest' + (process.platform === "win32" ? ".exe" : "")
         : mode === "libre" ? './bin/librespeed-cli' + (process.platform === "win32" ? ".exe" : "")
             : './bin/cfspeedtest' + (process.platform === "win32" ? ".exe" : "");
 
     // Check if binary exists before trying to spawn
     if (!fs.existsSync(binaryPath)) {
-        throw new Error(`测速组件 ${binaryPath} 不存在，请确认 bin 目录中包含对应组件`);
+        throw new Error(`测速组件 ${binaryPath} 不存在，请切换到 xxir CDN 模式或安装对应组件`);
     }
 
     if (!interfacesModule.interfaces) throw new Error("No interfaces found");
@@ -23,7 +30,7 @@ export default async (mode, serverId, serverUrl) => {
     let args;
 
     if (mode === "ookla") {
-        args = ['--accept-license', '--accept-gdpr', '--format=json', '--ipv4'];
+        args = ['--accept-license', '--accept-gdpr', '--format=json'];
 
         if (process.platform === "win32") {
             args.push('--ip=' + interfaceIp);
@@ -67,16 +74,10 @@ export default async (mode, serverId, serverUrl) => {
     const testProcess = spawn(binaryPath, args, {windowsHide: true});
 
     testProcess.stderr.on('data', (buffer) => {
-        const msg = buffer.toString();
-        if (msg.includes("Too many requests")) {
+        result.error = buffer.toString();
+        if (buffer.toString().includes("Too many requests")) {
             result.error = "Too many requests. Please try again later";
-        } else if (msg.includes("Cannot resolve host")
-                   || msg.includes("Cannot connect")
-                   || msg.includes("No servers defined")
-                   || msg.includes("Configuration")) {
-            result.error = msg;
         }
-        // [101] Network unreachable, [0] Cannot read from socket 等非致命 stderr 输出直接忽略
     });
 
     testProcess.stdout.on('data', (buffer) => {
@@ -112,10 +113,6 @@ export default async (mode, serverId, serverUrl) => {
         });
     });
 
-    // 如果 stdout 解析出了有效结果，即使有 stderr 警告也不抛异常
-    if (result.error && !result.download && !result.ping && !result.upload) {
-        throw new Error(result.error);
-    }
-
+    if (result.error) throw new Error(result.error);
     return {...result, elapsed: new Date().getTime() - startTime};
-};
+}
