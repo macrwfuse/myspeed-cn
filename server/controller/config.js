@@ -91,7 +91,7 @@ export const validateInput = async (key, value) => {
     if ((key === "ping" || key === "download" || key === "upload") && /[^0-9.]/.test(value))
         return "You need to provide a number in order to change this";
 
-    if ((key === "ooklaId" || key === "libreId") && (/[^0-9]/.test(value) && value !== "none"))
+    if ((key === "ooklaId") && (/[^0-9]/.test(value) && value !== "none"))
         return "You need to provide a number in order to change this";
 
     if (key === "libreUrl" && value !== "none") {

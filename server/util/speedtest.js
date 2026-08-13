@@ -49,7 +49,31 @@ export default async (mode, serverId, serverUrl) => {
             args.push(`--local-json=${tempJsonPath}`);
             args.push('--server=1');
         } else if (serverId) {
-            args.push(`--server=${serverId}`);
+            // 支持字符串 ID (如 "cn-edu-zju") 通过本地 JSON 传递节点配置
+            if (/[^0-9]/.test(String(serverId))) {
+                const { getLibreServers } = await import("../controller/servers.js");
+                const allServers = getLibreServers();
+                const serverEntry = allServers[serverId];
+                if (serverEntry) {
+                    const serverConfig = [{
+                        id: 1,
+                        name: serverEntry.name || "Selected Server",
+                        server: serverEntry.server,
+                        dlURL: serverEntry.dlURL || "garbage.php",
+                        ulURL: serverEntry.ulURL || "empty.php",
+                        pingURL: serverEntry.pingURL || "empty.php",
+                        getIpURL: serverEntry.getIpURL || "getIP.php"
+                    }];
+                    const tempJsonPath = path.join('data', 'servers', 'libre_selected.json');
+                    fs.writeFileSync(tempJsonPath, JSON.stringify(serverConfig));
+                    args.push(`--local-json=${tempJsonPath}`);
+                    args.push('--server=1');
+                } else {
+                    args.push(`--server=${serverId}`);
+                }
+            } else {
+                args.push(`--server=${serverId}`);
+            }
         }
     } else if (mode === "cloudflare") {
         args = ['--output-format=json'];
